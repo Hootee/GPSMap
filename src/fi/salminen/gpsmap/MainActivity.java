@@ -21,6 +21,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+
+import com.google.android.gms.maps.model.LatLng;
+
 import fi.salminen.gpsmap.R.id;
 import fi.salminen.gpsmap.R.string;
 
@@ -93,6 +96,10 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
                 mDatabaseService.deleteAllPlaces();
                 updatePlaceList();
                 return true;
+            case id.seconds15:
+            	update_time_interval = 1000 * 15;
+            	startTimer();
+            	return true;
             case id.minute1:
             	update_time_interval = 1000 * 60 * 1;
             	startTimer();
@@ -108,6 +115,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
             case id.minutes10:
             	update_time_interval = 1000 * 60 * 10;
             	startTimer();
+            	return true;
+            case id.meter1:
+            	update_travel_distance = 1;
             	return true;
             case id.meters10:
             	update_travel_distance = 10;
@@ -260,7 +270,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
             // If map frag is available, we're in two-panel layout...
 
             // Call a method in the MapFrag to update its content
-            frag.updateMapMarker(Double.parseDouble(latitude), Double.parseDouble(longitude));
+            frag.updateMapMarker(new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude)));
 
         } else {
             // If the frag is not available, we're in the one-pane layout and must swap frags...
@@ -297,11 +307,15 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			// Create place only if location is valid.
 			if (currentGPSLocation.getAccuracy() > 0) {
 				// if previous location is null then always create place else check if travelled distance is acceptable.
-				if (previousLocation == null || previousLocation.distanceTo(currentGPSLocation) > update_travel_distance) {
+				float traveledDistance = 0;
+//				if (previousLocation == null || (traveledDistance = previousLocation.distanceTo(currentGPSLocation)) > update_travel_distance) {
+					Log.i(TAG, "Traveled: " + traveledDistance + "m");
 					mDatabaseService.createPlace(currentGPSLocation);
 					updatePlaceList();
 					previousLocation = currentGPSLocation;
-				}
+//				} else {
+//					Log.i(TAG, "Not traveled enough!");
+//				}
 			}
 		} catch (Throwable t) { //you should always ultimately catch all exceptions in timer tasks.
 			Log.e(TAG, "onTimerTick failed.", t);            
@@ -313,5 +327,5 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	 */
 	private void updatePlaceList() {
 		LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent("placeCreated"));
-	}
+	}	
 }

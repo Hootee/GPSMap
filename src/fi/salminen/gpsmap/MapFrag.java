@@ -15,7 +15,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFrag extends SupportMapFragment {
 	private static final String TAG = "MapFrag";
-	private double latitude, longitude;
+	private LatLng locLatLng = null;
 	private float zoom = 15;
 	/**
 	 * Note that this may be null if the Google Play services APK is not available.
@@ -31,50 +31,73 @@ public class MapFrag extends SupportMapFragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Log.i(TAG, "onCreate");
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View view = super.onCreateView(inflater, container, savedInstanceState);
+		Log.i(TAG, "onCreateView");
+
 		// If activity recreated (such as from screen rotate), restore
         // the previous article selection set by onSaveInstanceState().
         // This is primarily necessary when in the two-panel layout.
         if (savedInstanceState != null) {
-        	latitude = savedInstanceState.getDouble(ARG_LAT);
-        	longitude = savedInstanceState.getDouble(ARG_LON);
+        	locLatLng = new LatLng(savedInstanceState.getDouble(ARG_LAT), savedInstanceState.getDouble(ARG_LON));
         	zoom = savedInstanceState.getFloat(ARG_ZOOM);
         }
 		return view;
 	}
-	
-	@Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
 
-        // Save the current article selection in case we need to recreate the fragment
-        outState.putFloat(ARG_ZOOM, zoom);
-        outState.putDouble(ARG_LAT, latitude);
-        outState.putDouble(ARG_LON, longitude);
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		Log.i(TAG, "onSaveInstanceState");
+
+		if (locLatLng != null) {
+			outState.putFloat(ARG_ZOOM, zoom);
+			outState.putDouble(ARG_LAT, locLatLng.latitude);
+			outState.putDouble(ARG_LON, locLatLng.longitude);
+		}
 	}
 
 	@Override
 	public void onStart() {
         super.onStart();
-
-        Bundle args = getArguments();
-        if (args != null) {
-        	latitude = args.getDouble(ARG_LAT);
-        	longitude = args.getDouble(ARG_LON);
-        	zoom = args.getFloat(ARG_ZOOM);
-        }
+		Log.i(TAG, "onStart");
 	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		Log.i(TAG, "onPause");
+	}
+	
+	@Override
+	public void onStop() {
+		super.onStop();
+		Log.i(TAG, "onStop");
+
+	}
+	
 	@Override
 	public void onResume() {
 		super.onResume();
-		mMap = getMap();
+		Log.i(TAG, "onResume");
+
+        mMap = getMap();
 		initMap();
-		updateMapMarker(latitude, longitude);
+		
+        Bundle args = getArguments();
+        if (args != null) {
+        	locLatLng = new LatLng(args.getDouble(ARG_LAT), args.getDouble(ARG_LON));
+        	zoom = args.getFloat(ARG_ZOOM);
+        }
+
+        if (locLatLng != null) {
+			updateMapMarker(locLatLng);
+		}
 	}
 	
 	private void initMap(){
@@ -83,9 +106,8 @@ public class MapFrag extends SupportMapFragment {
 	    settings.setMyLocationButtonEnabled(false);
 	}
 	
-	public void updateMapMarker(double latitude, double longitude) {
+	public void updateMapMarker(LatLng latLng) {
 		Log.i(TAG, "Uusi markkeri");
-		LatLng latLng = new LatLng(latitude, longitude);
 		MarkerOptions marker = new MarkerOptions().position(latLng).title("Markkeri");
 		mMap.addMarker(marker);
 		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));

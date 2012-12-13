@@ -18,9 +18,9 @@ public class LocationService extends Service
 	private LocationManager mLocationManager = null;
 	
 	// update location in 30s interval
-	private static final int LOCATION_INTERVAL = 30000;
+	private static final int LOCATION_INTERVAL = 15000;
 	// calculate travelled distance elsewhere
-	private static final float LOCATION_DISTANCE = 0f;
+	private static final float LOCATION_DISTANCE = 10f;
     
 	private class LocationListener implements android.location.LocationListener {
 		Location mLastLocation;

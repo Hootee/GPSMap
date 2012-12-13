@@ -7,6 +7,9 @@
         android:title="@string/menu_update_time_interval">
         <menu>
             <item
+                android:id="@+id/seconds15"
+                android:title="@string/menu_15_seconds"/>
+            <item
                 android:id="@+id/minute1"
                 android:title="@string/menu_1_minute"/>
             <item
@@ -23,8 +26,12 @@
     <item
         android:id="@+id/update_travel_distance"
         android:orderInCategory="2"
-        android:title="@string/menu_update_travel_distance">
+        android:title="@string/menu_update_travel_distance"
+        android:visible="false">
         <menu>
+            <item
+                android:id="@+id/meter1"
+                android:title="@string/menu_1_meter"/>
             <item
                 android:id="@+id/meters10"
                 android:title="@string/menu_10_meters"/>

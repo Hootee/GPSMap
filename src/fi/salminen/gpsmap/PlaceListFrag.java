@@ -40,7 +40,7 @@ public class PlaceListFrag extends ListFragment {
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-        	Log.i(TAG, "broadcast received: " + intent.getDataString() );
+        	Log.i(TAG, "broadcast received");
         	fillData();
         }
     };
@@ -104,8 +104,8 @@ public class PlaceListFrag extends ListFragment {
   		mDbHelper.openReadOnly();
     	Cursor c = mDbHelper.fetchAllPlaces();
 
-		String[] from = new String[] { PlacesDBAdapter.KEY_ROWID, PlacesDBAdapter.KEY_NAME, PlacesDBAdapter.KEY_LATITUDE /*, PlacesDBAdapter.KEY_LONGITUDE */ };
-		int[] to = new int[] { R.id.hiddenID, R.id.toptext, R.id.bottomtext };
+		String[] from = new String[] { PlacesDBAdapter.KEY_ROWID, PlacesDBAdapter.KEY_NAME, PlacesDBAdapter.KEY_LATITUDE , PlacesDBAdapter.KEY_LONGITUDE };
+		int[] to = new int[] { R.id.hiddenID, R.id.timeTextView, R.id.latitudeTextView, R.id.longitudeTextView };
 
 		// Now create an array adapter and set it to display using our row
 		SimpleCursorAdapter places = new SimpleCursorAdapter(this.getActivity(), R.layout.list_item, c, from, to);

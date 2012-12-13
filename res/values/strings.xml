@@ -9,14 +9,19 @@
     <string name="goto_GPS_settings">Goto Settings Page To Enable GPS</string>
     <string name="menu_remove_all_places">Remove all places</string>
     <string name="menu_update_time_interval">Update interval</string>
+    <string name="menu_15_seconds">15 seconds</string>
     <string name="menu_1_minute">1 minute</string>
     <string name="menu_2_minutes">2 minutes</string>
     <string name="menu_5_minutes">5 minutes</string>
     <string name="menu_10_minutes">10 minutes</string>
     <string name="menu_update_travel_distance">Update distance</string>
+    <string name="menu_1_meter">1 meter</string>
     <string name="menu_10_meters">10 meters</string>
     <string name="menu_50_meters">50 meters</string>
     <string name="menu_100_meters">100 meters</string>
     <string name="menu_500_meters">500 meters</string>
+    <string name="time">Time:</string>
+    <string name="latitude">Latitude:</string>
+    <string name="longitude">Longitude:</string>
 
 </resources>
