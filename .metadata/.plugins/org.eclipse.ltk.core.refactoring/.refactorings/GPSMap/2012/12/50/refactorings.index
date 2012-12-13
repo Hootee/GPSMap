@@ -1,0 +1,15 @@
+1355152932717	Rename type 'MapFragment'
+1355156410275	Rename type 'PlaceListFragment'
+1355163575254	Copy file
+1355227994293	Rename local variable 'articleFrag'
+1355228099826	Rename local variable 'newFragment'
+1355247817898	Rename field 'mBoundService'
+1355251545337	Copy compilation unit
+1355251743751	Rename field 'mIsBound'
+1355251999696	Rename local variable 'i'
+1355252018242	Rename local variable 'i'
+1355252207662	Rename field 'mConnection'
+1355252813422	Rename method 'initializeLocationManager'
+1355252851001	Rename method 'initializeDBAdapter'
+1355310618656	Rename method 'updateNote'
+1355316232905	Rename local variable 'frag'

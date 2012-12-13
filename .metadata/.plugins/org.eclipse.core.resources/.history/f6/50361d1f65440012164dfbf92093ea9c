@@ -1,0 +1,80 @@
+package fi.salminen.gpsmap;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+public class MapFrag extends SupportMapFragment {
+	private static final String TAG = "MapFrag";
+	private double latitude, longitude;
+	private float zoom;
+	/**
+	 * Note that this may be null if the Google Play services APK is not available.
+	 */
+	private GoogleMap mMap;
+	final static String ARG_LAT = "latitude";
+	final static String ARG_LON = "longitude";
+	
+	public MapFrag() {
+	}
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		View view = super.onCreateView(inflater, container, savedInstanceState);
+		// If activity recreated (such as from screen rotate), restore
+        // the previous article selection set by onSaveInstanceState().
+        // This is primarily necessary when in the two-panel layout.
+        if (savedInstanceState != null) {
+        	latitude = savedInstanceState.getDouble(ARG_LAT);
+        	longitude = savedInstanceState.getDouble(ARG_LON);
+        }
+		return view;
+	}
+
+	@Override
+	public void onStart() {
+        super.onStart();
+
+        Bundle args = getArguments();
+        if (args != null) {
+        	latitude = args.getDouble(ARG_LAT);
+        	longitude = args.getDouble(ARG_LON);
+        }
+	}
+	@Override
+	public void onResume() {
+		super.onResume();
+		mMap = getMap();
+		initMap();
+		updateMapMarker(latitude, longitude);
+	}
+	
+	private void initMap(){
+	    UiSettings settings = mMap.getUiSettings();
+	    settings.setAllGesturesEnabled(true);
+	    settings.setMyLocationButtonEnabled(false);
+	}
+	
+	public void updateMapMarker(double latitude, double longitude) {
+		Log.i(TAG, "Uusi markkeri");
+		LatLng latLng = new LatLng(latitude, longitude);
+		MarkerOptions marker = new MarkerOptions().position(latLng).title("Markkeri");
+		mMap.addMarker(marker);
+		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+	}
+}

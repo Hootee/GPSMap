@@ -1,0 +1,20 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+<!--     <fragment -->
+<!--         android:id="@+id/fragment_container1" -->
+<!--         android:name="fi.salminen.gpsmap.MapFrag" -->
+<!--         android:layout_width="0dp" -->
+<!--         android:layout_height="match_parent" -->
+<!--         android:layout_weight="1" /> -->
+
+    <fragment
+        android:id="@+id/fragment_container2"
+        android:name="fi.salminen.gpsmap.PlaceListFrag"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="2" />
+
+</LinearLayout>

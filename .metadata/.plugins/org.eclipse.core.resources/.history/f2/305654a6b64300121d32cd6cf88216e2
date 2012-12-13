@@ -1,0 +1,5 @@
+package fi.salminen.gpsmap;
+
+public class LocalBinder {
+
+}

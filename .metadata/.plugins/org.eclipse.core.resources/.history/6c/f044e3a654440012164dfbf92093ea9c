@@ -1,0 +1,217 @@
+package fi.salminen.gpsmap;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+public class PlacesDBAdapter {
+	
+	private static final String TAG = "PlacesDBAdapter";
+
+	public static final String KEY_NAME = "name";
+	public static final String KEY_LATITUDE = "latitude";
+	public static final String KEY_LONGITUDE = "longitude";
+	public static final String KEY_ROWID = "_id";
+
+	private DatabaseHelper mDbHelper;
+	private SQLiteDatabase mDb;
+//	private Geocoder mGeocoder;
+
+	private static final String DATABASE_NAME = "data";
+	private static final String DATABASE_TABLE = "places";
+	private static final int DATABASE_VERSION = 2;
+
+	/**
+	 * Database creation sql statement
+	 */
+	private static final String DATABASE_CREATE =
+			"CREATE TABLE " + DATABASE_TABLE + "("
+					+ KEY_ROWID + " integer primary key autoincrement, "
+					+ KEY_NAME + " text not null,"
+					+ KEY_LATITUDE + " text not null,"
+					+ KEY_LONGITUDE + " text not null"
+					+ ");";
+
+
+	private final Context mCtx;
+
+	
+	private static class DatabaseHelper extends SQLiteOpenHelper {
+
+		DatabaseHelper(Context context) {
+			super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		}
+
+		@Override
+		public void onCreate(SQLiteDatabase db) {
+
+			db.execSQL(DATABASE_CREATE);
+		}
+
+		@Override
+		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+			Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+					+ newVersion + ", which will destroy all old data");
+			db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE);
+			onCreate(db);
+		}
+	}
+
+	/**
+	 * Constructor - takes the context to allow the database to be
+	 * opened/created
+	 * 
+	 * @param ctx the Context within which to work
+	 */
+	public PlacesDBAdapter(Context ctx) {
+		this.mCtx = ctx;
+//		mGeocoder = new Geocoder(mCtx);
+	}
+
+	/**
+	 * Open the places database. If it cannot be opened, try to create a new
+	 * instance of the database. If it cannot be created, throw an exception to
+	 * signal the failure
+	 * 
+	 * @return this (self reference, allowing this to be chained in an
+	 *         initialization call)
+	 * @throws SQLException if the database could be neither opened or created
+	 */
+	public PlacesDBAdapter open() throws SQLException {
+		mDbHelper = new DatabaseHelper(mCtx);
+		mDb = mDbHelper.getWritableDatabase();
+		return this;
+	}
+
+	public void close() {
+		mDbHelper.close();
+	}
+
+
+	/**
+	 * Create a new place using the location provided. If the place is
+	 * successfully created return the new rowId for that place, otherwise return
+	 * a -1 to indicate failure.
+	 * 
+	 * @param location the location of the place
+	 * @return rowId or -1 if failed
+	 */
+	public long createPlace(double latitude, double longitude) {
+		ContentValues initialValues = new ContentValues();
+//		Address address;
+		StringBuilder addressSb = new StringBuilder();
+		addressSb.append("Osoite");
+//		try {
+//			address = mGeocoder.getFromLocation(latitude, longitude, 1).get(0);			
+//			if (address != null) {
+//				String premises = address.getPremises();
+//				if(premises != null) {
+//					addressSb.append(premises).append(" ");
+//				}
+//
+//				String streetName = address.getThoroughfare();
+//				if(streetName != null) {
+//					addressSb.append(streetName).append(" ");
+//				}
+//				
+//				String streetNumber = address.getSubThoroughfare();
+//				if(streetNumber != null) {
+//					addressSb.append(streetNumber).append(" ");
+//				}
+//
+//				String postalCode = address.getPostalCode();
+//				if(postalCode != null) {
+//					addressSb.append(postalCode).append(" ");
+//				}
+//
+//				String county = address.getSubLocality();
+//				if(county != null) {
+//					addressSb.append(county).append(" ");
+//				}
+//
+//			}
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		initialValues.put(KEY_NAME, addressSb.toString());			
+		initialValues.put(KEY_LATITUDE, Double.toString(latitude));
+		initialValues.put(KEY_LONGITUDE, Double.toString(longitude));
+
+		return mDb.insert(DATABASE_TABLE, null, initialValues);
+	}
+
+	/**
+	 * Delete the place with the given rowId
+	 * 
+	 * @param rowId id of place to delete
+	 * @return true if deleted, false otherwise
+	 */
+	public boolean deletePlace(String rowId) {
+
+		return mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+
+	/**
+	 * Delete all places
+	 * 
+	 * @return true if deleted, false otherwise
+	 */
+	public boolean deletePlace(String rowId) {
+
+		return mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+	/**
+	 * Return a Cursor over the list of all places in the database
+	 * 
+	 * @return Cursor over all places
+	 */
+	public Cursor fetchAllPlaces() {
+
+		return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_NAME,
+				KEY_LATITUDE, KEY_LONGITUDE}, null, null, null, null, null);
+	}
+
+	/**
+	 * Return a Cursor positioned at the place that matches the given rowId
+	 * 
+	 * @param rowId id of place to retrieve
+	 * @return Cursor positioned to matching place, if found
+	 * @throws SQLException if place could not be found/retrieved
+	 */
+	public Cursor fetchPlace(String rowId) throws SQLException {
+
+		Cursor mCursor = mDb.query(true, DATABASE_TABLE, new String[] {KEY_ROWID,
+				KEY_NAME, KEY_LATITUDE, KEY_LONGITUDE}, KEY_ROWID + "=" + rowId, null,
+				null, null, null, null);
+		if (mCursor != null) {
+			mCursor.moveToFirst();
+		}
+		return mCursor;
+
+	}
+
+	/**
+	 * Update the place using the details provided. The place to be updated is
+	 * specified using the rowId, and it is altered to use the name and location
+	 * values passed in
+	 * 
+	 * @param rowId id of place to update
+	 * @param name value to set place name to
+	 * @param location value to set place location to
+	 * @return true if the place was successfully updated, false otherwise
+	 */
+	public boolean updatePlace(String rowId, String name, double latitude, double longitude) {
+		ContentValues args = new ContentValues();
+		args.put(KEY_NAME, name);
+		args.put(KEY_LATITUDE, Double.toString(latitude));
+		args.put(KEY_LONGITUDE, Double.toString(longitude));
+
+		return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+}
+

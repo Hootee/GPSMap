@@ -1,0 +1,4 @@
+#Mon Dec 03 23:19:03 EET 2012
+__DEFAULT__=false
+org.eclipse.help.ui.localSearch.master=true
+expression=Project Selection
