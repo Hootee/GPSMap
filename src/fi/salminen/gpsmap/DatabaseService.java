@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.location.Location;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -95,10 +96,10 @@ public class DatabaseService extends Service
 //		}
 	}
 
-	public long createPlace(double latitude, double longitude)
+	public long createPlace(Location loc)
 	{	
 		if (mDbAdapter != null) {
-			return mDbAdapter.createPlace(latitude, longitude);
+			return mDbAdapter.createPlace(loc);
 		} else {
 			Log.e(TAG, "createPlace");
 			return 0L;

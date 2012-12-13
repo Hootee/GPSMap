@@ -16,7 +16,10 @@ public class LocationService extends Service
 {
 	private static final String TAG = "LocationService";
 	private LocationManager mLocationManager = null;
-	private static final int LOCATION_INTERVAL = 10000;
+	
+	// update location in 30s interval
+	private static final int LOCATION_INTERVAL = 30000;
+	// calculate travelled distance elsewhere
 	private static final float LOCATION_DISTANCE = 0f;
     
 	private class LocationListener implements android.location.LocationListener {

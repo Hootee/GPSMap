@@ -2,18 +2,21 @@
 <resources>
 
     <string name="app_name">GPSMap</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="cancel">Cancel</string>
     <string name="icon_text">Image from location</string>
-    <string name="waitGPS">Odotetaan GPS-signaalia&#8230;</string>
-    <string name="readyGPS">GPS-signaali valmis.</string>
-    <string name="menu_settings">Asetukset</string>
-    <string name="title_activity_places">Places</string>
-    <string name="main_no_items">No places to display</string>
-    <string name="title_activity_map">MapActivity</string>
+    <string name="menu_settings">Settings</string>
+    <string name="cancel">Cancel</string>
     <string name="enable_GPS">GPS is disabled in your device. Would you like to enable it?</string>
     <string name="goto_GPS_settings">Goto Settings Page To Enable GPS</string>
-	<string name="local_service_connected">LocationService connected</string>
-	<string name="local_service_disconnected">LocationService disconnected</string>
-	<string name="menu_remove_all_places">Remove all places</string>
+    <string name="menu_remove_all_places">Remove all places</string>
+    <string name="menu_update_time_interval">Update interval</string>
+    <string name="menu_1_minute">1 minute</string>
+    <string name="menu_2_minutes">2 minutes</string>
+    <string name="menu_5_minutes">5 minutes</string>
+    <string name="menu_10_minutes">10 minutes</string>
+    <string name="menu_update_travel_distance">Update distance</string>
+    <string name="menu_10_meters">10 meters</string>
+    <string name="menu_50_meters">50 meters</string>
+    <string name="menu_100_meters">100 meters</string>
+    <string name="menu_500_meters">500 meters</string>
+
 </resources>

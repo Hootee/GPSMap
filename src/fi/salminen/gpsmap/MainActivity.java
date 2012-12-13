@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import fi.salminen.gpsmap.R.id;
 import fi.salminen.gpsmap.R.string;
 
 public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPlaceSelectedListener {
@@ -30,6 +31,10 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	private Timer timer = new Timer();
 	private DatabaseService mDatabaseService;
 	private boolean mDatabaseServiceIsBound;
+	private long update_time_interval = 60000L;
+	private double update_travel_distance = 10;
+	private Location previousLocation = null;
+	
 
 	/** Called when the activity is first created. */
     @Override
@@ -84,10 +89,38 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.remove_all_places:
+            case id.remove_all_places:
                 mDatabaseService.deleteAllPlaces();
                 updatePlaceList();
                 return true;
+            case id.minute1:
+            	update_time_interval = 1000 * 60 * 1;
+            	startTimer();
+            	return true;
+            case id.minutes2:
+            	update_time_interval = 1000 * 60 * 2;
+            	startTimer();
+            	return true;
+            case id.minutes5:
+            	update_time_interval = 1000 * 60 * 5;
+            	startTimer();
+            	return true;
+            case id.minutes10:
+            	update_time_interval = 1000 * 60 * 10;
+            	startTimer();
+            	return true;
+            case id.meters10:
+            	update_travel_distance = 10;
+            	return true;
+            case id.meters50:
+            	update_travel_distance = 50;
+            	return true;
+            case id.meters100:
+            	update_travel_distance = 100;
+            	return true;
+            case id.meters500:
+            	update_travel_distance = 500;
+            	return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -131,7 +164,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	        // cast its IBinder to a concrete class and directly access it.
 	        mLocationService = ((LocalBinder<LocationService>) service).getService();
 //	        mLocationService = ((LocationService.LocalBinder) service).getService();
-	        timer.scheduleAtFixedRate(new TimerTask(){ public void run() {onTimerTick();}}, 10000L, 10000L);
+	        startTimer();
 	    }
 
 		@Override
@@ -252,24 +285,33 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
         }
 	}
 	
+	private void startTimer() {
+        timer.scheduleAtFixedRate(new TimerTask(){ public void run() {onTimerTick();}}, 10000L, update_time_interval);
+	}
+	
 	private void onTimerTick() {
 		Log.i(TAG, "onTimerTick");
 		try {
-			Location loc = mLocationService.getLastGPSLocation();
-			double latitude = loc.getLatitude();
-			double longitude = loc.getLongitude();
-			Log.i(TAG, Double.toString(latitude) + ", " + Double.toString(longitude));
-			if (latitude != 0 && longitude != 0) {
-				mDatabaseService.createPlace(latitude, longitude);
-				LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent("update"));
-//				updatePlaceList();
+			Location currentGPSLocation = mLocationService.getLastGPSLocation();
+			
+			// Create place only if location is valid.
+			if (currentGPSLocation.getAccuracy() > 0) {
+				// if previous location is null then always create place else check if travelled distance is acceptable.
+				if (previousLocation == null || previousLocation.distanceTo(currentGPSLocation) > update_travel_distance) {
+					mDatabaseService.createPlace(currentGPSLocation);
+					updatePlaceList();
+					previousLocation = currentGPSLocation;
+				}
 			}
 		} catch (Throwable t) { //you should always ultimately catch all exceptions in timer tasks.
 			Log.e(TAG, "onTimerTick failed.", t);            
 		}
 	}
 	
+	/*
+	 * Send localmessage that place has been created.
+	 */
 	private void updatePlaceList() {
-		LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent("update"));
+		LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent("placeCreated"));
 	}
 }

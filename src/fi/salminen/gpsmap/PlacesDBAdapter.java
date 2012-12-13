@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.location.Location;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -107,9 +108,12 @@ public class PlacesDBAdapter {
 	 * @param location the location of the place
 	 * @return rowId or -1 if failed
 	 */
-	public long createPlace(double latitude, double longitude) {
+	public long createPlace(Location location) {
 		ContentValues initialValues = new ContentValues();
 		StringBuilder addressSb = new StringBuilder();
+		
+		// Geocoder does not work on AOSP, so don't work on my Cyanogen phone.
+		// For now save time in NAME field.
 //		Address address = null;
 //		try {
 //			address = mGeocoder.getFromLocation(latitude, longitude, 1).get(0);			
@@ -149,8 +153,8 @@ public class PlacesDBAdapter {
 		time.setToNow();
 		addressSb.append(time.format("%k:%M:%S"));						
 		initialValues.put(KEY_NAME, addressSb.toString());			
-		initialValues.put(KEY_LATITUDE, Double.toString(latitude));
-		initialValues.put(KEY_LONGITUDE, Double.toString(longitude));
+		initialValues.put(KEY_LATITUDE, Double.toString(location.getLatitude()));
+		initialValues.put(KEY_LONGITUDE, Double.toString(location.getLongitude()));
 
 		return mDb.insert(DATABASE_TABLE, null, initialValues);
 	}
@@ -215,11 +219,11 @@ public class PlacesDBAdapter {
 	 * @param location value to set place location to
 	 * @return true if the place was successfully updated, false otherwise
 	 */
-	public boolean updatePlace(String rowId, String name, double latitude, double longitude) {
+	public boolean updatePlace(String rowId, String name, Location location) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_NAME, name);
-		args.put(KEY_LATITUDE, Double.toString(latitude));
-		args.put(KEY_LONGITUDE, Double.toString(longitude));
+		args.put(KEY_LATITUDE, Double.toString(location.getLatitude()));
+		args.put(KEY_LONGITUDE, Double.toString(location.getLongitude()));
 
 		return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
 	}

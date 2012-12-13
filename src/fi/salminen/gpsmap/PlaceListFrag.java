@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.content.LocalBroadcastManager;
@@ -35,13 +34,13 @@ public class PlaceListFrag extends ListFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(
-                mMessageReceiver, new IntentFilter("update"));
+                mMessageReceiver, new IntentFilter("placeCreated"));
     }
     
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-        	Log.i(TAG, "broadcast update");
+        	Log.i(TAG, "broadcast received: " + intent.getDataString() );
         	fillData();
         }
     };
@@ -56,7 +55,9 @@ public class PlaceListFrag extends ListFragment {
     @Override
     public void onStart() {
     	super.onStart();
+    	
     	fillData();
+    	
     	// When in two-panel layout, set the listview to highlight the selected list item
     	// (We do this during onStart because at the point the listview is available.)
     	if (getFragmentManager().findFragmentById(R.id.map) != null) {
@@ -93,6 +94,9 @@ public class PlaceListFrag extends ListFragment {
     	super.onDestroy();
     }
     
+    /*
+     * Fills listview with places from database.
+     */
     @SuppressWarnings("deprecation")
 	public void fillData() {
 		// Get all of the places from the database and create the item list
@@ -118,6 +122,7 @@ public class PlaceListFrag extends ListFragment {
         mCallback.onPlaceSelected(rowID);
         
         // Set the item as checked to be highlighted when in two-panel layout
+        // TODO: Set item checked in places list don't work as expected.
         getListView().setItemChecked(position, true);
 	}
 	
