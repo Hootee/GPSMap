@@ -25,8 +25,8 @@ public class MapFrag extends SupportMapFragment {
 	final static String ARG_LON = "longitude";
 	final static String ARG_ZOOM = "zoom";
 	
-	public MapFrag() {
-	}
+//	public MapFrag() {
+//	}
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -42,7 +42,7 @@ public class MapFrag extends SupportMapFragment {
 
 		// If activity recreated (such as from screen rotate), restore
         // the previous article selection set by onSaveInstanceState().
-        // This is primarily necessary when in the two-panel layout.
+        // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
         	locLatLng = new LatLng(savedInstanceState.getDouble(ARG_LAT), savedInstanceState.getDouble(ARG_LON));
         	zoom = savedInstanceState.getFloat(ARG_ZOOM);
@@ -93,11 +93,15 @@ public class MapFrag extends SupportMapFragment {
         if (args != null) {
         	locLatLng = new LatLng(args.getDouble(ARG_LAT), args.getDouble(ARG_LON));
         	zoom = args.getFloat(ARG_ZOOM);
+        	updateMapMarker(locLatLng);
         }
-
-        if (locLatLng != null) {
-			updateMapMarker(locLatLng);
-		}
+	
+//        locLatLng = ((MainActivity) this.getActivity()).getLatLng();
+//
+//        if (locLatLng != null) {
+//			updateMapMarker(locLatLng);
+//		}
+        
 	}
 	
 	private void initMap(){

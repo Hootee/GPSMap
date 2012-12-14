@@ -2,18 +2,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal" >
+    android:orientation="horizontal" 
+    android:baselineAligned="false" >
 
-    <fragment
+    <FrameLayout
         android:id="@+id/fragment_placelistfrag"
-        android:name="fi.salminen.gpsmap.PlaceListFrag"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1" />
 
-    <fragment
+    <FrameLayout
         android:id="@+id/fragment_mapfrag"
-        android:name="fi.salminen.gpsmap.MapFrag"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1" />

@@ -15,6 +15,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -29,119 +30,176 @@ import fi.salminen.gpsmap.R.string;
 
 public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPlaceSelectedListener {
 	private static final String TAG = "MainActivity";
+	static final String ZOOM = "zoom";
+	static final String LATITUDE = "latitude";
+	static final String LONGITUDE = "longitude";
 	private LocationService mLocationService;
 	private boolean mLocationServiceIsBound;
 	private Timer timer = new Timer();
 	private DatabaseService mDatabaseService;
 	private boolean mDatabaseServiceIsBound;
 	private long update_time_interval = 60000L;
-	private double update_travel_distance = 10;
-	private Location previousLocation = null;
-	
+	private float zoom = 15;
+	private double latitude = 0, longitude = 0;
+
 
 	/** Called when the activity is first created. */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-    	doBindDatabaseService();
-    	doBindLocationService();
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		Log.i(TAG, "onCreate");
 
-    	LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		this.setContentView(R.layout.activity_main);
+
+		// Check whether we're recreating a previously destroyed instance
+	    if (savedInstanceState != null) {
+	        // Restore value of members from saved state
+			zoom = savedInstanceState.getFloat(ZOOM);
+			latitude = savedInstanceState.getDouble(LATITUDE);
+			longitude = savedInstanceState.getDouble(LONGITUDE);
+	    } else {
+	        // Probably initialize members with default values for a new instance
+			zoom = 15;
+			latitude = 0;
+			longitude = 0;
+	    }
+		
+		doBindDatabaseService();
+		doBindLocationService();
+
+		LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		boolean enabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
 		// Check if enabled and if not send user to the GSP settings
 		if (!enabled) {
 			showGPSDisabledAlertToUser();
 		} 
-        
-    	setContentView(R.layout.activity_main);
 
-        
-        // Check whether the activity is using the layout version with
-        // the fragment_container FrameLayout. If so, we must add the first fragment
-        if (findViewById(R.id.fragment_container) != null) {
 
-            // However, if we're being restored from a previous state,
-            // then we don't need to do anything and should return or else
-            // we could end up with overlapping fragments.
-            if (savedInstanceState != null) {
-                return;
-            }
+		FragmentManager fragmentManager = this.getSupportFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-            // Create an instance of ExampleFragment
-            PlaceListFrag firstFragment = new PlaceListFrag();
+		// Check whether the activity is using the layout version with
+		// the fragment_container FrameLayout. If so, we must add the first fragment
+		if (findViewById(R.id.fragment_container) != null) {
+			if(fragmentManager.findFragmentById(id.fragment_container) == null) {
+				PlaceListFrag placeListFrag = new PlaceListFrag();
+				placeListFrag.setArguments(createBundle());
+				fragmentTransaction.add(R.id.fragment_container, placeListFrag);
+				fragmentTransaction.commit();
+			}
+		} else {		
+			// If there are fragment in one of the two frame layouts then both must be there.
+			fragmentManager.popBackStack(); // Tämän poistaa ylimääräisen fragmentin stackista. Ei tarvitse painaa kahta kertaa backia poistumiseen tietyissä tilanteissa.
+			MapFrag mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
+			if (mapFrag == null) {
+				mapFrag = new MapFrag();
+				mapFrag.setArguments(createBundle());
+				PlaceListFrag placeListFrag = new PlaceListFrag();
+				fragmentTransaction.add(R.id.fragment_placelistfrag, placeListFrag);
+				fragmentTransaction.add(R.id.fragment_mapfrag, mapFrag);
+				fragmentTransaction.commit();
+			}			
+		}
+	}
 
-            // In case this activity was started with special instructions from an Intent,
-            // pass the Intent's extras to the fragment as arguments
-            firstFragment.setArguments(getIntent().getExtras());
-
-            // Add the fragment to the 'fragment_container' FrameLayout
-            getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, firstFragment).commit();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.activity_main, menu);
-        return true;
-    }
-    
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        switch (item.getItemId()) {
-            case id.remove_all_places:
-                mDatabaseService.deleteAllPlaces();
-                updatePlaceList();
-                return true;
-            case id.seconds15:
-            	update_time_interval = 1000 * 15;
-            	startTimer();
-            	return true;
-            case id.minute1:
-            	update_time_interval = 1000 * 60 * 1;
-            	startTimer();
-            	return true;
-            case id.minutes2:
-            	update_time_interval = 1000 * 60 * 2;
-            	startTimer();
-            	return true;
-            case id.minutes5:
-            	update_time_interval = 1000 * 60 * 5;
-            	startTimer();
-            	return true;
-            case id.minutes10:
-            	update_time_interval = 1000 * 60 * 10;
-            	startTimer();
-            	return true;
-            case id.meter1:
-            	update_travel_distance = 1;
-            	return true;
-            case id.meters10:
-            	update_travel_distance = 10;
-            	return true;
-            case id.meters50:
-            	update_travel_distance = 50;
-            	return true;
-            case id.meters100:
-            	update_travel_distance = 100;
-            	return true;
-            case id.meters500:
-            	update_travel_distance = 500;
-            	return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-    
-    @Override
-    protected void onStart() {
-    	super.onStart();
-    }
+	private Bundle createBundle() {
+		Bundle bundle = new Bundle();
+		bundle.putFloat(ZOOM, zoom);
+		bundle.putDouble(LATITUDE, latitude);
+		bundle.putDouble(LONGITUDE, longitude);
+		return bundle;
+	}
 	
-    @Override
+	/* Instead of restoring the state during onCreate() you may choose to 
+	 * implement onRestoreInstanceState(), which the system calls after 
+	 * the onStart() method. The system calls onRestoreInstanceState() 
+	 * only if there is a saved state to restore, so you do not need to 
+	 * check whether the Bundle is null. 
+	 */
+/*	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		// Always call the superclass so it can restore the view hierarchy
+		super.onRestoreInstanceState(savedInstanceState);
+		
+		// Restore state members from saved instance
+		zoom = savedInstanceState.getFloat(ZOOM);
+		latitude = savedInstanceState.getDouble(LATITUDE);
+		longitude = savedInstanceState.getDouble(LONGITUDE);
+	}
+*/
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+	    // Save current state
+	    savedInstanceState.putFloat(ZOOM, zoom);
+	    savedInstanceState.putDouble(LATITUDE, latitude);
+	    savedInstanceState.putDouble(LONGITUDE, longitude);
+	    
+	    // Always call the superclass so it can save the view hierarchy state
+	    super.onSaveInstanceState(savedInstanceState);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.activity_main, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+		case id.remove_all_places:
+			mDatabaseService.deleteAllPlaces();
+			updatePlaceList();
+			return true;
+		case id.seconds15:
+			update_time_interval = 1000 * 15;
+			startTimer();
+			return true;
+		case id.minute1:
+			update_time_interval = 1000 * 60 * 1;
+			startTimer();
+			return true;
+		case id.minutes2:
+			update_time_interval = 1000 * 60 * 2;
+			startTimer();
+			return true;
+		case id.minutes5:
+			update_time_interval = 1000 * 60 * 5;
+			startTimer();
+			return true;
+		case id.minutes10:
+			update_time_interval = 1000 * 60 * 10;
+			startTimer();
+			return true;
+//		case id.meter1:
+//			update_travel_distance = 1;
+//			return true;
+//		case id.meters10:
+//			update_travel_distance = 10;
+//			return true;
+//		case id.meters50:
+//			update_travel_distance = 50;
+//			return true;
+//		case id.meters100:
+//			update_travel_distance = 100;
+//			return true;
+//		case id.meters500:
+//			update_travel_distance = 500;
+//			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
 	}
@@ -164,70 +222,70 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		doUnbindDatabaseService();
 	}
 
-    private ServiceConnection mLocationServiceConnection = new ServiceConnection() {
+	private ServiceConnection mLocationServiceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
-	        // This is called when the connection with the service has been
-	        // established, giving us the service object we can use to
-	        // interact with the service.  Because we have bound to a explicit
-	        // service that we know is running in our own process, we can
-	        // cast its IBinder to a concrete class and directly access it.
-	        mLocationService = ((LocalBinder<LocationService>) service).getService();
-//	        mLocationService = ((LocationService.LocalBinder) service).getService();
-	        startTimer();
-	    }
+			// This is called when the connection with the service has been
+			// established, giving us the service object we can use to
+			// interact with the service.  Because we have bound to a explicit
+			// service that we know is running in our own process, we can
+			// cast its IBinder to a concrete class and directly access it.
+			mLocationService = ((LocalBinder<LocationService>) service).getService();
+			//	        mLocationService = ((LocationService.LocalBinder) service).getService();
+			startTimer();
+		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-	        // This is called when the connection with the service has been
-	        // unexpectedly disconnected -- that is, its process crashed.
-	        // Because it is running in our same process, we should never
+			// This is called when the connection with the service has been
+			// unexpectedly disconnected -- that is, its process crashed.
+			// Because it is running in our same process, we should never
 			// see this happen.
 			mLocationService = null;
 			timer.cancel();
 		}
-    };
+	};
 
-    private void doBindLocationService() {
-    	// Establish a connection with the service.  We use an explicit
-    	// class name because we want a specific service implementation that
-    	// we know will be running in our own process (and thus won't be
-    	// supporting component replacement by other applications).
-    	Intent locationServiceIntent = new Intent(this, LocationService.class);
-    	mLocationServiceIsBound = bindService(locationServiceIntent, mLocationServiceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    private void doUnbindLocationService() {
-    	if (mLocationServiceIsBound) {
-    		// Detach our existing connection.
-    		unbindService(mLocationServiceConnection);
-    		mLocationServiceIsBound = false;
-	    }
+	private void doBindLocationService() {
+		// Establish a connection with the service.  We use an explicit
+		// class name because we want a specific service implementation that
+		// we know will be running in our own process (and thus won't be
+		// supporting component replacement by other applications).
+		Intent locationServiceIntent = new Intent(this, LocationService.class);
+		mLocationServiceIsBound = bindService(locationServiceIntent, mLocationServiceConnection, Context.BIND_AUTO_CREATE);
 	}
 
-    private ServiceConnection mDatabaseServiceConnection = new ServiceConnection() {
+	private void doUnbindLocationService() {
+		if (mLocationServiceIsBound) {
+			// Detach our existing connection.
+			unbindService(mLocationServiceConnection);
+			mLocationServiceIsBound = false;
+		}
+	}
+
+	private ServiceConnection mDatabaseServiceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
-	        mDatabaseService = ((LocalBinder<DatabaseService>) service).getService();
-	    }
+			mDatabaseService = ((LocalBinder<DatabaseService>) service).getService();
+		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			mDatabaseService = null;
 		}
-    };
-    
-    private void doBindDatabaseService() {
-    	Intent databaseServiceIntent = new Intent(this, DatabaseService.class);
-    	mDatabaseServiceIsBound = bindService(databaseServiceIntent, mDatabaseServiceConnection, Context.BIND_AUTO_CREATE);
-    }
+	};
 
-    private void doUnbindDatabaseService() {
-    	if (mDatabaseServiceIsBound) {
-    		// Detach our existing connection.
-    		unbindService(mDatabaseServiceConnection);
-    		mDatabaseServiceIsBound = false;
-	    }
+	private void doBindDatabaseService() {
+		Intent databaseServiceIntent = new Intent(this, DatabaseService.class);
+		mDatabaseServiceIsBound = bindService(databaseServiceIntent, mDatabaseServiceConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	private void doUnbindDatabaseService() {
+		if (mDatabaseServiceIsBound) {
+			// Detach our existing connection.
+			unbindService(mDatabaseServiceConnection);
+			mDatabaseServiceIsBound = false;
+		}
 	}
 
 	/*
@@ -258,70 +316,74 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	public void onPlaceSelected(String rowID) {
 		Cursor c = mDatabaseService.fetchPlace(rowID);
-		String latitude = c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LATITUDE));
-		String longitude = c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LONGITUDE));
+		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LATITUDE)));
+		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LONGITUDE)));
 		c.close();
 
-        // Capture the article fragment from the activity layout
-        MapFrag frag = (MapFrag)
-                getSupportFragmentManager().findFragmentById(R.id.fragment_mapfrag);
+		FragmentManager fragmentManager = this.getSupportFragmentManager();
 
-        if (frag != null) {
-            // If map frag is available, we're in two-panel layout...
+		MapFrag mapFrag;
 
-            // Call a method in the MapFrag to update its content
-            frag.updateMapMarker(new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude)));
+		if (findViewById(id.fragment_container) != null) {
+			// portrait - 1 fragment
+			Log.i(TAG, "Vaihda containerin sisältö mapFragiin.");
 
-        } else {
-            // If the frag is not available, we're in the one-pane layout and must swap frags...
+			FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-            // Create fragment and give it an argument for the selected article
-            MapFrag newFrag = new MapFrag();
-			Bundle args = new Bundle();
-            args.putDouble(MapFrag.ARG_LAT, Double.parseDouble(latitude));
-            args.putDouble(MapFrag.ARG_LON, Double.parseDouble(longitude));
-            args.putFloat(MapFrag.ARG_ZOOM, 15);
-            newFrag.setArguments(args);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+			mapFrag = new MapFrag();
+			mapFrag.setArguments(createBundle());
 
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction.replace(R.id.fragment_container, newFrag);
-            transaction.addToBackStack(null);
+			// Replace whatever is in the fragment_container view with this fragment,
+			// and add the transaction to the back stack so the user can navigate back
+			fragmentTransaction.replace(R.id.fragment_container, mapFrag);
+			fragmentTransaction.addToBackStack(null);
 
-            // Commit the transaction
-            transaction.commit();
+			// Commit the transaction
+			fragmentTransaction.commit();
 
-        }
+		} else {
+			// landscape - 2 fragments
+			Log.i(TAG, "Päivitä mapFrag.");
+			// If map frag is available, we're in two-pane layout...
+			
+			mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
+			// Call a method in the MapFrag to update its content
+			mapFrag.updateMapMarker(getLatLng());
+
+		}
 	}
 	
+	public LatLng getLatLng() {
+		return new LatLng(latitude, longitude);
+	}
+
 	private void startTimer() {
-        timer.scheduleAtFixedRate(new TimerTask(){ public void run() {onTimerTick();}}, 10000L, update_time_interval);
+		timer.scheduleAtFixedRate(new TimerTask(){ public void run() {onTimerTick();}}, 10000L, update_time_interval);
 	}
-	
+
 	private void onTimerTick() {
 		Log.i(TAG, "onTimerTick");
 		try {
 			Location currentGPSLocation = mLocationService.getLastGPSLocation();
-			
+
 			// Create place only if location is valid.
 			if (currentGPSLocation.getAccuracy() > 0) {
 				// if previous location is null then always create place else check if travelled distance is acceptable.
 				float traveledDistance = 0;
 //				if (previousLocation == null || (traveledDistance = previousLocation.distanceTo(currentGPSLocation)) > update_travel_distance) {
-					Log.i(TAG, "Traveled: " + traveledDistance + "m");
-					mDatabaseService.createPlace(currentGPSLocation);
-					updatePlaceList();
-					previousLocation = currentGPSLocation;
-//				} else {
-//					Log.i(TAG, "Not traveled enough!");
-//				}
+				Log.i(TAG, "Traveled: " + traveledDistance + "m");
+				mDatabaseService.createPlace(currentGPSLocation);
+				updatePlaceList();
+//				previousLocation = currentGPSLocation;
+//			} else {
+//				Log.i(TAG, "Not traveled enough!");
+//			}
 			}
 		} catch (Throwable t) { //you should always ultimately catch all exceptions in timer tasks.
 			Log.e(TAG, "onTimerTick failed.", t);            
 		}
 	}
-	
+
 	/*
 	 * Send localmessage that place has been created.
 	 */

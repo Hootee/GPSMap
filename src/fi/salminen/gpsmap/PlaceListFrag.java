@@ -27,44 +27,9 @@ public class PlaceListFrag extends ListFragment {
         public void onPlaceSelected(String rowID);
     }
     
-    public PlaceListFrag() {
-	}
+//    public PlaceListFrag() {
+//	}
         
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(
-                mMessageReceiver, new IntentFilter("placeCreated"));
-    }
-    
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-        	Log.i(TAG, "broadcast received");
-        	fillData();
-        }
-    };
-
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    	// TODO Auto-generated method stub
-    	super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public void onStart() {
-    	super.onStart();
-    	
-    	fillData();
-    	
-    	// When in two-panel layout, set the listview to highlight the selected list item
-    	// (We do this during onStart because at the point the listview is available.)
-    	if (getFragmentManager().findFragmentById(R.id.map) != null) {
-    		getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-    	}
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -79,6 +44,41 @@ public class PlaceListFrag extends ListFragment {
         }
     }
     
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(
+                mMessageReceiver, new IntentFilter("placeCreated"));
+    }
+    
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    	// TODO Auto-generated method stub
+    	super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        	Log.i(TAG, "broadcast received");
+        	fillData();
+        }
+    };
+
+
+    @Override
+    public void onStart() {
+    	super.onStart();
+    	
+    	fillData();
+    	
+    	// When in two-panel layout, set the listview to highlight the selected list item
+    	// (We do this during onStart because at the point the listview is available.)
+    	if (getFragmentManager().findFragmentById(R.id.map) != null) {
+    		getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+    	}
+    }
+
     @Override
     public void onResume() {
     	super.onResume();
