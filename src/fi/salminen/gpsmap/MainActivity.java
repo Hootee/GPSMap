@@ -366,24 +366,32 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 	private void onTimerTick() {
 		Log.i(TAG, "onTimerTick");
-		try {
-			Location currentGPSLocation = mLocationService.getLastGPSLocation();
+		if (mLocationServiceIsBound) {
+			try {
+				Location currentGPSLocation = mLocationService.getLastGPSLocation();
 
-			// Create place only if location is valid.
-			if (currentGPSLocation.getAccuracy() > 0) {
-				// if previous location is null then always create place else check if travelled distance is acceptable.
-				float traveledDistance = 0;
-//				if (previousLocation == null || (traveledDistance = previousLocation.distanceTo(currentGPSLocation)) > update_travel_distance) {
-				Log.i(TAG, "Traveled: " + traveledDistance + "m");
-				mDatabaseService.createPlace(currentGPSLocation);
-				updatePlaceList();
-//				previousLocation = currentGPSLocation;
-//			} else {
+				// Create place only if location is valid.
+				if (currentGPSLocation.getAccuracy() > 0) {
+					// if previous location is null then always create place else check if travelled distance is acceptable.
+					float traveledDistance = 0;
+//					if (previousLocation == null || (traveledDistance = previousLocation.distanceTo(currentGPSLocation)) > update_travel_distance) {
+					Log.i(TAG, "Traveled: " + traveledDistance + "m");
+					if(mDatabaseServiceIsBound) {
+						mDatabaseService.createPlace(currentGPSLocation);
+					} else {
+						Log.e(TAG, "Database service not available.");
+					}
+					updatePlaceList();
+//					previousLocation = currentGPSLocation;
+//				} else {
 //				Log.i(TAG, "Not traveled enough!");
-//			}
+//				}
+				}
+			} catch (Throwable t) { //you should always ultimately catch all exceptions in timer tasks.
+				Log.e(TAG, "onTimerTick failed.", t);            
 			}
-		} catch (Throwable t) { //you should always ultimately catch all exceptions in timer tasks.
-			Log.e(TAG, "onTimerTick failed.", t);            
+		} else {
+			Log.e(TAG, "Location service not available");
 		}
 	}
 
