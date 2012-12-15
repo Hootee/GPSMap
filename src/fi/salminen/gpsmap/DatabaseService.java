@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.location.Location;
+import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -14,63 +15,30 @@ import android.util.Log;
 public class DatabaseService extends Service
 {
 	private static final String TAG = "DatabaseService";
+	
+	// Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
+    
 	private PlacesDBAdapter mDbAdapter = null;
 
-	/*
-	 * Called by system when bound to pass a Binder back. I treat Binders as
-	 * throw away objects.
+	/**
+	 * Class for clients to access.  Because we know this service always
+	 * runs in the same process as its clients, we don't need to deal with
+	 * IPC.
 	 */
+	public class LocalBinder extends Binder {
+		DatabaseService getService() {
+			Log.i(TAG, "LocalBinder.getService");
+			return DatabaseService.this;
+		}
+	}
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		Log.i(TAG, "onBind");
-		return new LocalBinder<DatabaseService>(this);
+		return mBinder;
 	}
-
-	    /**
-	     * Class for clients to access.  Because we know this service always
-	     * runs in the same process as its clients, we don't need to deal with
-	     * IPC.
-	     */
-/*	    public class LocalBinder extends Binder {
-	        LocationService getService() {
-		          Log.i(TAG, "LocalBinder.getService");
-	            return LocationService.this;
-	        }
-	    }
-	    
-	    @Override
-	    public IBinder onBind(Intent intent) {
-		      Log.i(TAG, "onBind");
-	        return mBinder;
-	    }
 	
-	    // This is the object that receives interactions from clients.  See
-	    // RemoteService for a more complete example.
-	    private final IBinder mBinder = new LocalBinder();
-*/
-	
-	/*
-	 * Called when all Activities are unbound
-	 */
-	public boolean onUnbind(Intent intent){
-		Log.i(TAG, "onUnbind");
-		/*
-		 * I don't really need this
-		 * If you clean up here, you will need
-		 * to reinitialise in onBind(), ONCE,
-		 * when it is next called.
-		 */ 
-		return false;
-	}
-
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId)
-	{
-		Log.i(TAG, "onStartCommand");
-		super.onStartCommand(intent, flags, startId);       
-		return START_STICKY;
-	}
-
 	@Override
 	public void onCreate()
 	{

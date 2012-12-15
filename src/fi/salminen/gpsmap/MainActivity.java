@@ -64,9 +64,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			longitude = 0;
 	    }
 		
-		doBindDatabaseService();
-		doBindLocationService();
-
+		// Check if GPS is enabled. Nothing to do with LocationService.
 		LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		boolean enabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
@@ -197,6 +195,8 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onStart() {
 		super.onStart();
+		doBindDatabaseService();
+		doBindLocationService();
 	}
 
 	@Override
@@ -212,14 +212,14 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onStop() {
 		super.onStop();
+		doUnbindLocationService();
+		doUnbindDatabaseService();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		if (timer != null) {timer.cancel();}
-		doUnbindLocationService();
-		doUnbindDatabaseService();
 	}
 
 	private ServiceConnection mLocationServiceConnection = new ServiceConnection() {
@@ -230,8 +230,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			// interact with the service.  Because we have bound to a explicit
 			// service that we know is running in our own process, we can
 			// cast its IBinder to a concrete class and directly access it.
-			mLocationService = ((LocalBinder<LocationService>) service).getService();
-			//	        mLocationService = ((LocationService.LocalBinder) service).getService();
+			LocationService.LocalBinder binder = (LocationService.LocalBinder) service;
+			mLocationService = binder.getService();
+			mLocationServiceIsBound = true;			
 			startTimer();
 		}
 
@@ -241,7 +242,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			// unexpectedly disconnected -- that is, its process crashed.
 			// Because it is running in our same process, we should never
 			// see this happen.
-			mLocationService = null;
+			mLocationServiceIsBound = false;
 			timer.cancel();
 		}
 	};
@@ -266,12 +267,14 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	private ServiceConnection mDatabaseServiceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			mDatabaseService = ((LocalBinder<DatabaseService>) service).getService();
+			DatabaseService.LocalBinder binder = (DatabaseService.LocalBinder) service;
+			mDatabaseService = binder.getService();
+			mDatabaseServiceIsBound = true;
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			mDatabaseService = null;
+			mDatabaseServiceIsBound = false;
 		}
 	};
 
