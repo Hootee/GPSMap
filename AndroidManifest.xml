@@ -50,7 +50,6 @@
         </activity>
 <!--         <service android:name=".LocationService" android:process=":location_service" /> -->
         <service android:name=".LocationService" />
-        <service android:name=".DatabaseService" />
         </application>
 
 </manifest>

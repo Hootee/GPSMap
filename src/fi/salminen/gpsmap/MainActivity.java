@@ -36,12 +36,10 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	private LocationService mLocationService;
 	private boolean mLocationServiceIsBound;
 	private Timer timer = new Timer();
-	private DatabaseService mDatabaseService;
-	private boolean mDatabaseServiceIsBound;
 	private long update_time_interval = 60000L;
 	private float zoom = 15;
 	private double latitude = 0, longitude = 0;
-
+	private PlacesDBAdapter mDbHelper = null;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -149,8 +147,10 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		// Handle item selection
 		switch (item.getItemId()) {
 		case id.remove_all_places:
-			mDatabaseService.deleteAllPlaces();
-			updatePlaceList();
+			mDbHelper.open();
+			mDbHelper.deleteAllPlaces();
+			mDbHelper.close();
+			updatePlaceList();			
 			return true;
 		case id.seconds15:
 			update_time_interval = 1000 * 15;
@@ -195,25 +195,25 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onStart() {
 		super.onStart();
-		doBindDatabaseService();
-		doBindLocationService();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+		mDbHelper = new PlacesDBAdapter(this);
+		doBindLocationService();		
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		doUnbindLocationService();
+		mDbHelper.close();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		doUnbindLocationService();
-		doUnbindDatabaseService();
 	}
 
 	@Override
@@ -264,33 +264,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		}
 	}
 
-	private ServiceConnection mDatabaseServiceConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName className, IBinder service) {
-			DatabaseService.LocalBinder binder = (DatabaseService.LocalBinder) service;
-			mDatabaseService = binder.getService();
-			mDatabaseServiceIsBound = true;
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			mDatabaseServiceIsBound = false;
-		}
-	};
-
-	private void doBindDatabaseService() {
-		Intent databaseServiceIntent = new Intent(this, DatabaseService.class);
-		mDatabaseServiceIsBound = bindService(databaseServiceIntent, mDatabaseServiceConnection, Context.BIND_AUTO_CREATE);
-	}
-
-	private void doUnbindDatabaseService() {
-		if (mDatabaseServiceIsBound) {
-			// Detach our existing connection.
-			unbindService(mDatabaseServiceConnection);
-			mDatabaseServiceIsBound = false;
-		}
-	}
-
 	/*
 	 * http://stackoverflow.com/questions/843675/how-do-i-find-out-if-the-gps-of-an-android-device-is-enabled
 	 */
@@ -318,10 +291,12 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 	@Override
 	public void onPlaceSelected(String rowID) {
-		Cursor c = mDatabaseService.fetchPlace(rowID);
+		mDbHelper.open();
+		Cursor c = mDbHelper.fetchPlace(rowID);
 		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LATITUDE)));
 		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LONGITUDE)));
 		c.close();
+		mDbHelper.close();
 
 		FragmentManager fragmentManager = this.getSupportFragmentManager();
 
@@ -376,11 +351,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 					float traveledDistance = 0;
 //					if (previousLocation == null || (traveledDistance = previousLocation.distanceTo(currentGPSLocation)) > update_travel_distance) {
 					Log.i(TAG, "Traveled: " + traveledDistance + "m");
-					if(mDatabaseServiceIsBound) {
-						mDatabaseService.createPlace(currentGPSLocation);
-					} else {
-						Log.e(TAG, "Database service not available.");
-					}
+					mDbHelper.open();
+					mDbHelper.createPlace(currentGPSLocation);
+					mDbHelper.close();
 					updatePlaceList();
 //					previousLocation = currentGPSLocation;
 //				} else {
