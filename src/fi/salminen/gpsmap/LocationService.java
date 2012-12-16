@@ -95,15 +95,15 @@ public class LocationService extends Service
 	{
 		Log.i(TAG, "onCreate");
 		initializeLocationManager();
-		try {
-			mLocationManager.requestLocationUpdates(
-					LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-					mLocationListeners[1]);
-		} catch (java.lang.SecurityException ex) {
-			Log.i(TAG, "fail to request location update, ignore", ex);
-		} catch (IllegalArgumentException ex) {
-			Log.d(TAG, "network provider does not exist, " + ex.getMessage());
-		}
+//		try {
+//			mLocationManager.requestLocationUpdates(
+//					LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+//					mLocationListeners[1]);
+//		} catch (java.lang.SecurityException ex) {
+//			Log.i(TAG, "fail to request location update, ignore", ex);
+//		} catch (IllegalArgumentException ex) {
+//			Log.d(TAG, "network provider does not exist, " + ex.getMessage());
+//		}
 		try {
 			mLocationManager.requestLocationUpdates(
 					LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,

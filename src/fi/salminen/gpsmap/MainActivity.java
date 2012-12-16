@@ -208,7 +208,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	protected void onPause() {
 		super.onPause();
 		doUnbindLocationService();
-		mDbHelper.close();
 	}
 
 	@Override
