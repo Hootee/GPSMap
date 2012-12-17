@@ -17,6 +17,7 @@ public class MapFrag extends SupportMapFragment {
 	private static final String TAG = "MapFrag";
 	private LatLng locLatLng = null;
 	private float zoom = 15;
+	private String message;
 	/**
 	 * Note that this may be null if the Google Play services APK is not available.
 	 */
@@ -24,7 +25,7 @@ public class MapFrag extends SupportMapFragment {
 	final static String ARG_LAT = "latitude";
 	final static String ARG_LON = "longitude";
 	final static String ARG_ZOOM = "zoom";
-	
+	final static String ARG_MSG = "message";
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -42,6 +43,7 @@ public class MapFrag extends SupportMapFragment {
         // This is primarily necessary when in the two-pane layout.
         if (savedInstanceState != null) {
         	locLatLng = new LatLng(savedInstanceState.getDouble(ARG_LAT), savedInstanceState.getDouble(ARG_LON));
+        	message = savedInstanceState.getString(ARG_MSG);
         	zoom = savedInstanceState.getFloat(ARG_ZOOM);
         }
 		return view;
@@ -56,6 +58,7 @@ public class MapFrag extends SupportMapFragment {
 			outState.putFloat(ARG_ZOOM, zoom);
 			outState.putDouble(ARG_LAT, locLatLng.latitude);
 			outState.putDouble(ARG_LON, locLatLng.longitude);
+			outState.putString(ARG_MSG, message);
 		}
 	}
 
@@ -90,15 +93,9 @@ public class MapFrag extends SupportMapFragment {
         if (args != null) {
         	locLatLng = new LatLng(args.getDouble(ARG_LAT), args.getDouble(ARG_LON));
         	zoom = args.getFloat(ARG_ZOOM);
-        	updateMapMarker(locLatLng);
-        }
-	
-//        locLatLng = ((MainActivity) this.getActivity()).getLatLng();
-//
-//        if (locLatLng != null) {
-//			updateMapMarker(locLatLng);
-//		}
-        
+        	message = args.getString(ARG_MSG);
+        	updateMapMarker(locLatLng, message);
+        }        
 	}
 	
 	private void initMap(){
@@ -107,10 +104,13 @@ public class MapFrag extends SupportMapFragment {
 	    settings.setMyLocationButtonEnabled(false);
 	}
 	
-	public void updateMapMarker(LatLng latLng) {
-		Log.i(TAG, "Uusi markkeri");
-		MarkerOptions marker = new MarkerOptions().position(latLng).title("Markkeri");
+	public void updateMapMarker(LatLng latLng, String message) {
+		Log.i(TAG, "update marker: " + message);
+		mMap.clear();
+		MarkerOptions marker = new MarkerOptions().position(latLng).title(message);
 		mMap.addMarker(marker);
 		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+		locLatLng = latLng;
+		this.message = message; 
 	}
 }

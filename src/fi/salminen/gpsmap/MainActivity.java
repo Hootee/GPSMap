@@ -35,6 +35,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	static final String ZOOM = "zoom";
 	static final String LATITUDE = "latitude";
 	static final String LONGITUDE = "longitude";
+	static final String MESSAGE = "message";
 	static final String PREV_LATITUDE = "prev_latitude";
 	static final String PREV_LONGITUDE = "prev_longitude";
 	static final String UPDATE_TIME_INTERVAL = "update_time_interval";
@@ -46,7 +47,10 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	private long update_time_interval = 60000L;
 	private float update_travel_distance = 10;
 	private float zoom = 15;
+	private String message;
 	private double latitude = 0, longitude = 0, prev_latitude = 0, prev_longitude = 0;
+	
+	private MapFrag mapFrag = null;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -62,6 +66,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			zoom = savedInstanceState.getFloat(ZOOM);
 			latitude = savedInstanceState.getDouble(LATITUDE);
 			longitude = savedInstanceState.getDouble(LONGITUDE);
+			message = savedInstanceState.getString(MESSAGE);
 			prev_latitude = savedInstanceState.getDouble(PREV_LATITUDE);
 			prev_longitude = savedInstanceState.getDouble(PREV_LONGITUDE);
 			update_time_interval = savedInstanceState.getLong(UPDATE_TIME_INTERVAL);
@@ -92,8 +97,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			}
 		} else {		
 			// If there are fragment in one of the two frame layouts then both must be there.
-			fragmentManager.popBackStack(); // Tämän poistaa ylimääräisen fragmentin stackista. Ei tarvitse painaa kahta kertaa backia poistumiseen tietyissä tilanteissa.
+			fragmentManager.popBackStack(); // Tämän poistaa ylimääräisen fragmentin stackista. Ei tarvitse painaa kahta kertaa backia sovelluksesta poistumiseen.
 			MapFrag mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
+			mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			if (mapFrag == null) {
 				mapFrag = new MapFrag();
 				mapFrag.setArguments(createBundle());
@@ -110,6 +116,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		bundle.putFloat(ZOOM, zoom);
 		bundle.putDouble(LATITUDE, latitude);
 		bundle.putDouble(LONGITUDE, longitude);
+		bundle.putString(MESSAGE, message);
 		return bundle;
 	}
 	
@@ -136,6 +143,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	    savedInstanceState.putFloat(ZOOM, zoom);
 	    savedInstanceState.putDouble(LATITUDE, latitude);
 	    savedInstanceState.putDouble(LONGITUDE, longitude);
+	    savedInstanceState.putString(MESSAGE, message);
 	    savedInstanceState.putDouble(PREV_LATITUDE, prev_latitude);
 	    savedInstanceState.putDouble(PREV_LONGITUDE, prev_longitude);
 	    savedInstanceState.putLong(UPDATE_TIME_INTERVAL, update_time_interval);
@@ -297,15 +305,16 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	public void onPlaceSelected(String rowID) {
 		String[] projection = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
-		Cursor c = getContentResolver().query(PlaceListProvider.CONTENT_URI, projection, rowID, null, null);
+		String selection = PlaceListDB.KEY_ROWID + "=" + rowID;
+		Cursor c = getContentResolver().query(PlaceListProvider.CONTENT_URI, projection, selection, null, null);
 		c.moveToFirst();
+		String message = c.getString(c.getColumnIndex(PlaceListDB.KEY_NAME));
 		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlaceListDB.KEY_LATITUDE)));
 		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlaceListDB.KEY_LONGITUDE)));
+		Log.i(TAG, "onPlaceSelected: " + latitude + ", " + longitude + ", " + message);
 		c.close();
 		
 		FragmentManager fragmentManager = this.getSupportFragmentManager();
-
-		MapFrag mapFrag;
 
 		if (findViewById(id.fragment_container) != null) {
 			// portrait - 1 fragment
@@ -313,8 +322,13 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 			FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-			mapFrag = new MapFrag();
-			mapFrag.setArguments(createBundle());
+//			mapFrag = new MapFrag();
+//			mapFrag.setArguments(createBundle());
+			if (mapFrag == null) {
+				mapFrag = new MapFrag();
+				mapFrag.setArguments(createBundle());
+			} else {
+			}
 
 			// Replace whatever is in the fragment_container view with this fragment,
 			// and add the transaction to the back stack so the user can navigate back
@@ -329,9 +343,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			Log.i(TAG, "Päivitä mapFrag.");
 			// If map frag is available, we're in two-pane layout...
 			
-			mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
+			MapFrag mFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			// Call a method in the MapFrag to update its content
-			mapFrag.updateMapMarker(new LatLng(latitude, longitude));
+			mFrag.updateMapMarker(new LatLng(latitude, longitude), message);
 
 		}
 	}
