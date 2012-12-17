@@ -27,7 +27,7 @@
         android:id="@+id/update_travel_distance"
         android:orderInCategory="2"
         android:title="@string/menu_update_travel_distance"
-        android:visible="false">
+        android:visible="true">
         <menu>
             <item
                 android:id="@+id/meter1"

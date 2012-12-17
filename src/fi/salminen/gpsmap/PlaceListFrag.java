@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.view.Menu;
@@ -27,9 +28,6 @@ public class PlaceListFrag extends ListFragment {
         public void onPlaceSelected(String rowID);
     }
     
-//    public PlaceListFrag() {
-//	}
-        
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -49,6 +47,15 @@ public class PlaceListFrag extends ListFragment {
         super.onCreate(savedInstanceState);
         LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(
                 mMessageReceiver, new IntentFilter("placeCreated"));
+        
+        String[] projection = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
+        String[] uiBindFrom = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
+        int[] uiBindTo = { R.id.hiddenID, R.id.timeTextView, R.id.latitudeTextView, R.id.longitudeTextView };
+        Cursor places = getActivity().managedQuery(PlaceListProvider.CONTENT_URI, projection, null, null, null);
+        CursorAdapter adapter = new SimpleCursorAdapter(getActivity()
+                .getApplicationContext(), R.layout.list_item, places,
+                uiBindFrom, uiBindTo);
+        setListAdapter(adapter);
     }
     
     @Override
@@ -61,7 +68,7 @@ public class PlaceListFrag extends ListFragment {
         @Override
         public void onReceive(Context context, Intent intent) {
         	Log.i(TAG, "broadcast received");
-        	fillData();
+//        	fillData();
         }
     };
 
@@ -69,8 +76,6 @@ public class PlaceListFrag extends ListFragment {
     @Override
     public void onStart() {
     	super.onStart();
-    	
-    	fillData();
     	
     	// When in two-panel layout, set the listview to highlight the selected list item
     	// (We do this during onStart because at the point the listview is available.)
@@ -82,6 +87,7 @@ public class PlaceListFrag extends ListFragment {
     @Override
     public void onResume() {
     	super.onResume();
+//    	fillData();
     }
     
     @Override
@@ -94,25 +100,26 @@ public class PlaceListFrag extends ListFragment {
     	super.onDestroy();
     }
     
-    /*
-     * Fills listview with places from database.
-     */
-    @SuppressWarnings("deprecation")
-	public void fillData() {
-		// Get all of the places from the database and create the item list
-    	PlacesDBAdapter mDbHelper = new PlacesDBAdapter(this.getActivity());
-  		mDbHelper.openReadOnly();
-    	Cursor c = mDbHelper.fetchAllPlaces();
-
-		String[] from = new String[] { PlacesDBAdapter.KEY_ROWID, PlacesDBAdapter.KEY_NAME, PlacesDBAdapter.KEY_LATITUDE , PlacesDBAdapter.KEY_LONGITUDE };
-		int[] to = new int[] { R.id.hiddenID, R.id.timeTextView, R.id.latitudeTextView, R.id.longitudeTextView };
-
-		// Now create an array adapter and set it to display using our row
-		SimpleCursorAdapter places = new SimpleCursorAdapter(this.getActivity(), R.layout.list_item, c, from, to);
-		setListAdapter(places);
-//		c.close();
-		mDbHelper.close();
-	}
+//    /*
+//     * Fills listview with places from database.
+//     */
+//    @SuppressWarnings("deprecation")
+//	public void fillData() {
+//		// Get all of the places from the database and create the item list    	
+//    	PlacesDBAdapter mDbAdapter = new PlacesDBAdapter(this.getActivity());
+//    	mDbAdapter.open();
+//
+//    	Cursor c = mDbAdapter.fetchAllPlaces();
+//
+//		String[] from = new String[] { PlacesDBAdapter.KEY_ROWID, PlacesDBAdapter.KEY_NAME, PlacesDBAdapter.KEY_LATITUDE , PlacesDBAdapter.KEY_LONGITUDE };
+//		int[] to = new int[] { R.id.hiddenID, R.id.timeTextView, R.id.latitudeTextView, R.id.longitudeTextView };
+//
+//		// Now create an array adapter and set it to display using our row
+//		SimpleCursorAdapter places = new SimpleCursorAdapter(this.getActivity(), R.layout.list_item, c, from, to);
+//		setListAdapter(places);
+////		c.close();
+//		mDbAdapter.close();
+//	}
 
 	@Override
 	public void onListItemClick(ListView listView, View view, int position, long id) {

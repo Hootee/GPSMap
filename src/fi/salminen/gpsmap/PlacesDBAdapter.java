@@ -89,12 +89,6 @@ public class PlacesDBAdapter {
 		return this;
 	}
 
-	public PlacesDBAdapter openReadOnly() throws SQLException {
-		mDbHelper = new DatabaseHelper(mCtx);
-		mDb = mDbHelper.getReadableDatabase();
-		return this;
-	}
-
 	public void close() {
 		mDbHelper.close();
 	}

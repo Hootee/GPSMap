@@ -30,17 +30,24 @@ import fi.salminen.gpsmap.R.string;
 
 public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPlaceSelectedListener {
 	private static final String TAG = "MainActivity";
+	
 	static final String ZOOM = "zoom";
 	static final String LATITUDE = "latitude";
 	static final String LONGITUDE = "longitude";
+	static final String PREV_LATITUDE = "prev_latitude";
+	static final String PREV_LONGITUDE = "prev_longitude";
+	static final String UPDATE_TIME_INTERVAL = "update_time_interval";
+	static final String UPDATE_TRAVEL_DISTANCE = "update_travel_distance";
+	
 	private LocationService mLocationService;
 	private boolean mLocationServiceIsBound;
 	private Timer timer = new Timer();
 	private long update_time_interval = 60000L;
+	private float update_travel_distance = 10;
 	private float zoom = 15;
-	private double latitude = 0, longitude = 0;
-	private PlacesDBAdapter mDbHelper = null;
-
+	private double latitude = 0, longitude = 0, prev_latitude = 0, prev_longitude = 0;
+	private PlacesDBAdapter mDbAdapter = null;
+	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -49,17 +56,18 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 		this.setContentView(R.layout.activity_main);
 
+		mDbAdapter = new PlacesDBAdapter(this);
+
 		// Check whether we're recreating a previously destroyed instance
 	    if (savedInstanceState != null) {
 	        // Restore value of members from saved state
 			zoom = savedInstanceState.getFloat(ZOOM);
 			latitude = savedInstanceState.getDouble(LATITUDE);
 			longitude = savedInstanceState.getDouble(LONGITUDE);
-	    } else {
-	        // Probably initialize members with default values for a new instance
-			zoom = 15;
-			latitude = 0;
-			longitude = 0;
+			prev_latitude = savedInstanceState.getDouble(PREV_LATITUDE);
+			prev_longitude = savedInstanceState.getDouble(PREV_LONGITUDE);
+			update_time_interval = savedInstanceState.getLong(UPDATE_TIME_INTERVAL);
+			update_travel_distance = savedInstanceState.getFloat(UPDATE_TRAVEL_DISTANCE);
 	    }
 		
 		// Check if GPS is enabled. Nothing to do with LocationService.
@@ -130,7 +138,10 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	    savedInstanceState.putFloat(ZOOM, zoom);
 	    savedInstanceState.putDouble(LATITUDE, latitude);
 	    savedInstanceState.putDouble(LONGITUDE, longitude);
-	    
+	    savedInstanceState.putDouble(PREV_LATITUDE, prev_latitude);
+	    savedInstanceState.putDouble(PREV_LONGITUDE, prev_longitude);
+	    savedInstanceState.putLong(UPDATE_TIME_INTERVAL, update_time_interval);
+	    savedInstanceState.putFloat(UPDATE_TRAVEL_DISTANCE, update_travel_distance);
 	    // Always call the superclass so it can save the view hierarchy state
 	    super.onSaveInstanceState(savedInstanceState);
 	}
@@ -147,9 +158,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		// Handle item selection
 		switch (item.getItemId()) {
 		case id.remove_all_places:
-			mDbHelper.open();
-			mDbHelper.deleteAllPlaces();
-			mDbHelper.close();
+			mDbAdapter.open();
+			mDbAdapter.deleteAllPlaces();
+			mDbAdapter.close();
 			updatePlaceList();			
 			return true;
 		case id.seconds15:
@@ -172,21 +183,21 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			update_time_interval = 1000 * 60 * 10;
 			startTimer();
 			return true;
-//		case id.meter1:
-//			update_travel_distance = 1;
-//			return true;
-//		case id.meters10:
-//			update_travel_distance = 10;
-//			return true;
-//		case id.meters50:
-//			update_travel_distance = 50;
-//			return true;
-//		case id.meters100:
-//			update_travel_distance = 100;
-//			return true;
-//		case id.meters500:
-//			update_travel_distance = 500;
-//			return true;
+		case id.meter1:
+			update_travel_distance = 1;
+			return true;
+		case id.meters10:
+			update_travel_distance = 10;
+			return true;
+		case id.meters50:
+			update_travel_distance = 50;
+			return true;
+		case id.meters100:
+			update_travel_distance = 100;
+			return true;
+		case id.meters500:
+			update_travel_distance = 500;
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
@@ -200,7 +211,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mDbHelper = new PlacesDBAdapter(this);
 		doBindLocationService();		
 	}
 
@@ -213,6 +223,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onStop() {
 		super.onStop();
+		
 	}
 
 	@Override
@@ -290,12 +301,12 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 	@Override
 	public void onPlaceSelected(String rowID) {
-		mDbHelper.open();
-		Cursor c = mDbHelper.fetchPlace(rowID);
+		mDbAdapter.open();
+		Cursor c = mDbAdapter.fetchPlace(rowID);
 		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LATITUDE)));
 		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LONGITUDE)));
 		c.close();
-		mDbHelper.close();
+		mDbAdapter.close();
 
 		FragmentManager fragmentManager = this.getSupportFragmentManager();
 
@@ -325,15 +336,11 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			
 			mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			// Call a method in the MapFrag to update its content
-			mapFrag.updateMapMarker(getLatLng());
+			mapFrag.updateMapMarker(new LatLng(latitude, longitude));
 
 		}
 	}
 	
-	public LatLng getLatLng() {
-		return new LatLng(latitude, longitude);
-	}
-
 	private void startTimer() {
 		timer.scheduleAtFixedRate(new TimerTask(){ public void run() {onTimerTick();}}, 10000L, update_time_interval);
 	}
@@ -343,21 +350,21 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		if (mLocationServiceIsBound) {
 			try {
 				Location currentGPSLocation = mLocationService.getLastGPSLocation();
-
 				// Create place only if location is valid.
+				float traveled_distance = 0;
 				if (currentGPSLocation.getAccuracy() > 0) {
 					// if previous location is null then always create place else check if travelled distance is acceptable.
-					float traveledDistance = 0;
-//					if (previousLocation == null || (traveledDistance = previousLocation.distanceTo(currentGPSLocation)) > update_travel_distance) {
-					Log.i(TAG, "Traveled: " + traveledDistance + "m");
-					mDbHelper.open();
-					mDbHelper.createPlace(currentGPSLocation);
-					mDbHelper.close();
-					updatePlaceList();
-//					previousLocation = currentGPSLocation;
-//				} else {
-//				Log.i(TAG, "Not traveled enough!");
-//				}
+					if ((prev_latitude == 0 && prev_longitude == 0) || ((traveled_distance = traveledDistance(currentGPSLocation)) > update_travel_distance)) {
+						Log.i(TAG, "Traveled: " + traveled_distance + "m");
+						mDbAdapter.open();
+						mDbAdapter.createPlace(currentGPSLocation);
+						mDbAdapter.close();
+						updatePlaceList();
+						prev_latitude = currentGPSLocation.getLatitude();
+						prev_longitude = currentGPSLocation.getLongitude();
+					} else {
+						Log.i(TAG, "Not traveled enough! " + traveled_distance + "m" ) ;
+					}
 				}
 			} catch (Throwable t) { //you should always ultimately catch all exceptions in timer tasks.
 				Log.e(TAG, "onTimerTick failed.", t);            
@@ -367,6 +374,14 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		}
 	}
 
+	private float traveledDistance(Location locB) {
+		Location locA = new Location("Point A");
+		locA.setLatitude(prev_latitude);
+		locA.setLongitude(prev_longitude);
+		
+		return locA.distanceTo(locB);
+	}
+	
 	/*
 	 * Send localmessage that place has been created.
 	 */
