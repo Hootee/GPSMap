@@ -25,9 +25,6 @@ public class MapFrag extends SupportMapFragment {
 	final static String ARG_LON = "longitude";
 	final static String ARG_ZOOM = "zoom";
 	
-//	public MapFrag() {
-//	}
-	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

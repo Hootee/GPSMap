@@ -5,6 +5,7 @@ import java.util.TimerTask;
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,7 +18,7 @@ import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -46,7 +47,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	private float update_travel_distance = 10;
 	private float zoom = 15;
 	private double latitude = 0, longitude = 0, prev_latitude = 0, prev_longitude = 0;
-	private PlacesDBAdapter mDbAdapter = null;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -55,8 +55,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		Log.i(TAG, "onCreate");
 
 		this.setContentView(R.layout.activity_main);
-
-		mDbAdapter = new PlacesDBAdapter(this);
 
 		// Check whether we're recreating a previously destroyed instance
 	    if (savedInstanceState != null) {
@@ -158,10 +156,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		// Handle item selection
 		switch (item.getItemId()) {
 		case id.remove_all_places:
-			mDbAdapter.open();
-			mDbAdapter.deleteAllPlaces();
-			mDbAdapter.close();
-			updatePlaceList();			
+			removeAllPlaces();
 			return true;
 		case id.seconds15:
 			update_time_interval = 1000 * 15;
@@ -301,13 +296,13 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 	@Override
 	public void onPlaceSelected(String rowID) {
-		mDbAdapter.open();
-		Cursor c = mDbAdapter.fetchPlace(rowID);
-		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LATITUDE)));
-		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlacesDBAdapter.KEY_LONGITUDE)));
+		String[] projection = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
+		Cursor c = getContentResolver().query(PlaceListProvider.CONTENT_URI, projection, rowID, null, null);
+		c.moveToFirst();
+		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlaceListDB.KEY_LATITUDE)));
+		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlaceListDB.KEY_LONGITUDE)));
 		c.close();
-		mDbAdapter.close();
-
+		
 		FragmentManager fragmentManager = this.getSupportFragmentManager();
 
 		MapFrag mapFrag;
@@ -356,10 +351,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 					// if previous location is null then always create place else check if travelled distance is acceptable.
 					if ((prev_latitude == 0 && prev_longitude == 0) || ((traveled_distance = traveledDistance(currentGPSLocation)) > update_travel_distance)) {
 						Log.i(TAG, "Traveled: " + traveled_distance + "m");
-						mDbAdapter.open();
-						mDbAdapter.createPlace(currentGPSLocation);
-						mDbAdapter.close();
-						updatePlaceList();
+						addPlace(currentGPSLocation);
 						prev_latitude = currentGPSLocation.getLatitude();
 						prev_longitude = currentGPSLocation.getLongitude();
 					} else {
@@ -374,6 +366,28 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		}
 	}
 
+	private void addPlace(Location loc) {
+		Time time = new Time(Time.getCurrentTimezone());
+		time.set(loc.getTime());
+		ContentValues placeData = new ContentValues();
+		placeData.put(
+		        PlaceListDB.KEY_NAME,
+		        time.format("%k:%M:%S"));
+		placeData.put(
+		        PlaceListDB.KEY_LATITUDE,
+		        Double.toString(loc.getLatitude()));
+		placeData.put(
+		        PlaceListDB.KEY_LONGITUDE,
+		        Double.toString(loc.getLongitude()));
+		getContentResolver().insert(
+		        PlaceListProvider.CONTENT_URI,
+		        placeData);
+	}
+	
+	private void removeAllPlaces() {
+		getContentResolver().delete(PlaceListProvider.CONTENT_URI, null, null);
+	}
+	
 	private float traveledDistance(Location locB) {
 		Location locA = new Location("Point A");
 		locA.setLatitude(prev_latitude);
@@ -381,11 +395,4 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		
 		return locA.distanceTo(locB);
 	}
-	
-	/*
-	 * Send localmessage that place has been created.
-	 */
-	private void updatePlaceList() {
-		LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent("placeCreated"));
-	}	
 }

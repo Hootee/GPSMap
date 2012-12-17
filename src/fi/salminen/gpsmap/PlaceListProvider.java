@@ -2,13 +2,17 @@ package fi.salminen.gpsmap;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 
 public class PlaceListProvider extends ContentProvider {
 
@@ -70,7 +74,24 @@ public class PlaceListProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		// TODO Auto-generated method stub
+		int uriType = sURIMatcher.match(uri);
+		if (uriType != PLACES) {
+			throw new IllegalArgumentException("Invalid URI for insert");
+		}
+		SQLiteDatabase sqlDB = mDB.getWritableDatabase();
+		try {
+			long newID = sqlDB.insertOrThrow(PlaceListDB.DATABASE_TABLE, null,
+					values);
+			if (newID > 0) {
+				Uri newUri = ContentUris.withAppendedId(uri, newID);
+				getContext().getContentResolver().notifyChange(uri, null);
+				return newUri;
+			} else {
+				throw new SQLException("Failed to insert row into " + uri);
+			}
+		} catch (SQLiteConstraintException e) {
+			Log.i(TAG, "Ignoring constraint failure.");
+		}
 		return null;
 	}
 

@@ -1,27 +1,27 @@
 package fi.salminen.gpsmap;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.widget.CursorAdapter;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class PlaceListFrag extends ListFragment {
+public class PlaceListFrag extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 	private static final String TAG = "PlaceListFrag";
-	
+
     OnPlaceSelectedListener mCallback;
+
+    private static final int PLACE_LIST_LOADER = 0x01;
+    private SimpleCursorAdapter adapter;
+    
     // The container Activity must implement this interface so the fragment can deliver messages
     public interface OnPlaceSelectedListener {
         /** Called by PlaceListFragment when a list item is selected */
@@ -45,15 +45,13 @@ public class PlaceListFrag extends ListFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(
-                mMessageReceiver, new IntentFilter("placeCreated"));
-        
-        String[] projection = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
+
         String[] uiBindFrom = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
         int[] uiBindTo = { R.id.hiddenID, R.id.timeTextView, R.id.latitudeTextView, R.id.longitudeTextView };
-        Cursor places = getActivity().managedQuery(PlaceListProvider.CONTENT_URI, projection, null, null, null);
-        CursorAdapter adapter = new SimpleCursorAdapter(getActivity()
-                .getApplicationContext(), R.layout.list_item, places,
+
+        getLoaderManager().initLoader(PLACE_LIST_LOADER, null, this);
+        adapter = new SimpleCursorAdapter(
+        		getActivity().getApplicationContext(), R.layout.list_item, null,
                 uiBindFrom, uiBindTo);
         setListAdapter(adapter);
     }
@@ -63,15 +61,6 @@ public class PlaceListFrag extends ListFragment {
     	// TODO Auto-generated method stub
     	super.onCreateOptionsMenu(menu, inflater);
     }
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-        	Log.i(TAG, "broadcast received");
-//        	fillData();
-        }
-    };
-
 
     @Override
     public void onStart() {
@@ -87,7 +76,6 @@ public class PlaceListFrag extends ListFragment {
     @Override
     public void onResume() {
     	super.onResume();
-//    	fillData();
     }
     
     @Override
@@ -99,27 +87,6 @@ public class PlaceListFrag extends ListFragment {
     public void onDestroy() {
     	super.onDestroy();
     }
-    
-//    /*
-//     * Fills listview with places from database.
-//     */
-//    @SuppressWarnings("deprecation")
-//	public void fillData() {
-//		// Get all of the places from the database and create the item list    	
-//    	PlacesDBAdapter mDbAdapter = new PlacesDBAdapter(this.getActivity());
-//    	mDbAdapter.open();
-//
-//    	Cursor c = mDbAdapter.fetchAllPlaces();
-//
-//		String[] from = new String[] { PlacesDBAdapter.KEY_ROWID, PlacesDBAdapter.KEY_NAME, PlacesDBAdapter.KEY_LATITUDE , PlacesDBAdapter.KEY_LONGITUDE };
-//		int[] to = new int[] { R.id.hiddenID, R.id.timeTextView, R.id.latitudeTextView, R.id.longitudeTextView };
-//
-//		// Now create an array adapter and set it to display using our row
-//		SimpleCursorAdapter places = new SimpleCursorAdapter(this.getActivity(), R.layout.list_item, c, from, to);
-//		setListAdapter(places);
-////		c.close();
-//		mDbAdapter.close();
-//	}
 
 	@Override
 	public void onListItemClick(ListView listView, View view, int position, long id) {
@@ -132,6 +99,22 @@ public class PlaceListFrag extends ListFragment {
         // TODO: Set item checked in places list don't work as expected.
         getListView().setItemChecked(position, true);
 	}
-	
-	
+
+	@Override
+	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+		String[] projection = { PlaceListDB.KEY_ROWID, PlaceListDB.KEY_NAME, PlaceListDB.KEY_LATITUDE, PlaceListDB.KEY_LONGITUDE };
+	    CursorLoader cursorLoader = new CursorLoader(getActivity(),
+	            PlaceListProvider.CONTENT_URI, projection, null, null, null);
+	    return cursorLoader;
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+		adapter.swapCursor(cursor);	
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> loader) {
+		adapter.swapCursor(null);
+	}
 }

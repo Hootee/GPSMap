@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 /*
+ * Pohja löydetty osoitteesta:
  * http://stackoverflow.com/questions/8828639/android-get-gps-location-via-a-service
  */
 public class LocationService extends Service
@@ -25,7 +26,7 @@ public class LocationService extends Service
 	// update location in 30s interval
 	private static final int LOCATION_INTERVAL = 15000;
 	// calculate travelled distance elsewhere
-	private static final float LOCATION_DISTANCE = 10f;
+	private static final float LOCATION_DISTANCE = 0f;
     
 	    
     /**
