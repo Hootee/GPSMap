@@ -23,9 +23,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
-import com.google.android.gms.maps.model.LatLng;
-
 import fi.salminen.gpsmap.R.id;
 import fi.salminen.gpsmap.R.string;
 
@@ -101,7 +98,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			if (mapFrag == null) {
 				mapFrag = new MapFrag();
-//				mapFrag.setArguments(createBundle());
 				PlaceListFrag placeListFrag = new PlaceListFrag();
 				fragmentTransaction.add(R.id.fragment_placelistfrag, placeListFrag);
 				fragmentTransaction.add(R.id.fragment_mapfrag, mapFrag);
@@ -120,23 +116,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		return bundle;
 	}
 	
-	/* Instead of restoring the state during onCreate() you may choose to 
-	 * implement onRestoreInstanceState(), which the system calls after 
-	 * the onStart() method. The system calls onRestoreInstanceState() 
-	 * only if there is a saved state to restore, so you do not need to 
-	 * check whether the Bundle is null. 
-	 */
-/*	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		// Always call the superclass so it can restore the view hierarchy
-		super.onRestoreInstanceState(savedInstanceState);
-		
-		// Restore state members from saved instance
-		zoom = savedInstanceState.getFloat(ZOOM);
-		latitude = savedInstanceState.getDouble(LATITUDE);
-		longitude = savedInstanceState.getDouble(LONGITUDE);
-	}
-*/
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		Log.i(TAG, "onSaveInstance");
@@ -208,24 +187,9 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	}
 
 	@Override
-	protected void onStart() {
-		super.onStart();
-	}
-
-	@Override
 	protected void onResume() {
 		super.onResume();
 		doBindLocationService();		
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
 	}
 
 	@Override

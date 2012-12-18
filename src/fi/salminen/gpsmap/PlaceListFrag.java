@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class PlaceListFrag extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+	@SuppressWarnings("unused")
 	private static final String TAG = "PlaceListFrag";
 
     OnPlaceSelectedListener mCallback;
@@ -71,21 +72,6 @@ public class PlaceListFrag extends ListFragment implements LoaderManager.LoaderC
     	if (getFragmentManager().findFragmentById(R.id.map) != null) {
     		getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
     	}
-    }
-
-    @Override
-    public void onResume() {
-    	super.onResume();
-    }
-    
-    @Override
-    public void onPause() {
-    	super.onPause();
-    }
-    
-    @Override
-    public void onDestroy() {
-    	super.onDestroy();
     }
 
 	@Override

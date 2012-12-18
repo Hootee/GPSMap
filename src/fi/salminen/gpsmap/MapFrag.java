@@ -18,16 +18,12 @@ public class MapFrag extends SupportMapFragment {
 	
 	private LatLng locLatLng = null;
 	private float zoom = 15;
-	private String message;
+	private String message = null;
 	
 	/**
 	 * Note that this may be null if the Google Play services APK is not available.
 	 */
 	private GoogleMap mMap;
-//	final static String ARG_LAT = "latitude";
-//	final static String ARG_LON = "longitude";
-//	final static String ARG_ZOOM = "zoom";
-//	final static String ARG_MSG = "message";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -41,30 +37,9 @@ public class MapFrag extends SupportMapFragment {
 		View view = super.onCreateView(inflater, container, savedInstanceState);
 		Log.i(TAG, "onCreateView");
 
-		// If activity recreated (such as from screen rotate), restore
-        // the previous article selection set by onSaveInstanceState().
-        // This is primarily necessary when in the two-pane layout.
-//        if (savedInstanceState != null) {
-//        	locLatLng = new LatLng(savedInstanceState.getDouble(MainActivity.LATITUDE), savedInstanceState.getDouble(MainActivity.LONGITUDE));
-//        	message = savedInstanceState.getString(MainActivity.MESSAGE);
-//        	zoom = savedInstanceState.getFloat(MainActivity.ZOOM);
-//        }
 		return view;
 	}
 
-//	@Override
-//	public void onSaveInstanceState(Bundle outState) {
-//		super.onSaveInstanceState(outState);
-//		Log.i(TAG, "onSaveInstanceState");
-//
-//		if (locLatLng != null) {
-//			outState.putFloat(ARG_ZOOM, zoom);
-//			outState.putDouble(ARG_LAT, locLatLng.latitude);
-//			outState.putDouble(ARG_LON, locLatLng.longitude);
-//			outState.putString(ARG_MSG, message);
-//		}
-//	}
-	
 	@Override
 	public void onResume() {
 		super.onResume();
@@ -73,7 +48,7 @@ public class MapFrag extends SupportMapFragment {
         mMap = getMap();
 		initMap();
 		
-        if(locLatLng != null) {
+        if(message != null) {
         	updateMapMarker();
         }
         

@@ -39,6 +39,12 @@ public class PlaceListProvider extends ContentProvider {
 	private PlaceListDB mDB;
 		
 	@Override
+	public boolean onCreate() {
+		mDB = new PlaceListDB(getContext());
+		return true;
+	}
+
+	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
 		int uriType = sURIMatcher.match(uri);
 		SQLiteDatabase sqlDB = mDB.getWritableDatabase();
@@ -93,12 +99,6 @@ public class PlaceListProvider extends ContentProvider {
 			Log.i(TAG, "Ignoring constraint failure.");
 		}
 		return null;
-	}
-
-	@Override
-	public boolean onCreate() {
-		mDB = new PlaceListDB(getContext());
-		return true;
 	}
 
 	@Override
