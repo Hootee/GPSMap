@@ -15,17 +15,20 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFrag extends SupportMapFragment {
 	private static final String TAG = "MapFrag";
+	
 	private LatLng locLatLng = null;
 	private float zoom = 15;
 	private String message;
+	
 	/**
 	 * Note that this may be null if the Google Play services APK is not available.
 	 */
 	private GoogleMap mMap;
-	final static String ARG_LAT = "latitude";
-	final static String ARG_LON = "longitude";
-	final static String ARG_ZOOM = "zoom";
-	final static String ARG_MSG = "message";
+//	final static String ARG_LAT = "latitude";
+//	final static String ARG_LON = "longitude";
+//	final static String ARG_ZOOM = "zoom";
+//	final static String ARG_MSG = "message";
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -41,45 +44,26 @@ public class MapFrag extends SupportMapFragment {
 		// If activity recreated (such as from screen rotate), restore
         // the previous article selection set by onSaveInstanceState().
         // This is primarily necessary when in the two-pane layout.
-        if (savedInstanceState != null) {
-        	locLatLng = new LatLng(savedInstanceState.getDouble(ARG_LAT), savedInstanceState.getDouble(ARG_LON));
-        	message = savedInstanceState.getString(ARG_MSG);
-        	zoom = savedInstanceState.getFloat(ARG_ZOOM);
-        }
+//        if (savedInstanceState != null) {
+//        	locLatLng = new LatLng(savedInstanceState.getDouble(MainActivity.LATITUDE), savedInstanceState.getDouble(MainActivity.LONGITUDE));
+//        	message = savedInstanceState.getString(MainActivity.MESSAGE);
+//        	zoom = savedInstanceState.getFloat(MainActivity.ZOOM);
+//        }
 		return view;
 	}
 
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		Log.i(TAG, "onSaveInstanceState");
-
-		if (locLatLng != null) {
-			outState.putFloat(ARG_ZOOM, zoom);
-			outState.putDouble(ARG_LAT, locLatLng.latitude);
-			outState.putDouble(ARG_LON, locLatLng.longitude);
-			outState.putString(ARG_MSG, message);
-		}
-	}
-
-	@Override
-	public void onStart() {
-        super.onStart();
-		Log.i(TAG, "onStart");
-	}
-	
-	@Override
-	public void onPause() {
-		super.onPause();
-		Log.i(TAG, "onPause");
-	}
-	
-	@Override
-	public void onStop() {
-		super.onStop();
-		Log.i(TAG, "onStop");
-
-	}
+//	@Override
+//	public void onSaveInstanceState(Bundle outState) {
+//		super.onSaveInstanceState(outState);
+//		Log.i(TAG, "onSaveInstanceState");
+//
+//		if (locLatLng != null) {
+//			outState.putFloat(ARG_ZOOM, zoom);
+//			outState.putDouble(ARG_LAT, locLatLng.latitude);
+//			outState.putDouble(ARG_LON, locLatLng.longitude);
+//			outState.putString(ARG_MSG, message);
+//		}
+//	}
 	
 	@Override
 	public void onResume() {
@@ -89,13 +73,21 @@ public class MapFrag extends SupportMapFragment {
         mMap = getMap();
 		initMap();
 		
-        Bundle args = getArguments();
+        if(locLatLng != null) {
+        	updateMapMarker();
+        }
+        
+	}
+	
+	public boolean setLocation(Bundle args) {
+		Log.i(TAG, "setLocation");
         if (args != null) {
-        	locLatLng = new LatLng(args.getDouble(ARG_LAT), args.getDouble(ARG_LON));
-        	zoom = args.getFloat(ARG_ZOOM);
-        	message = args.getString(ARG_MSG);
-        	updateMapMarker(locLatLng, message);
-        }        
+        	locLatLng = new LatLng(args.getDouble(MainActivity.LATITUDE), args.getDouble(MainActivity.LONGITUDE));
+        	zoom = args.getFloat(MainActivity.ZOOM);
+        	message = args.getString(MainActivity.MESSAGE);
+        	return true;
+        }        		
+        return false;
 	}
 	
 	private void initMap(){
@@ -104,13 +96,11 @@ public class MapFrag extends SupportMapFragment {
 	    settings.setMyLocationButtonEnabled(false);
 	}
 	
-	public void updateMapMarker(LatLng latLng, String message) {
+	public void updateMapMarker() {
 		Log.i(TAG, "update marker: " + message);
 		mMap.clear();
-		MarkerOptions marker = new MarkerOptions().position(latLng).title(message);
+		MarkerOptions marker = new MarkerOptions().position(locLatLng).title(message);
 		mMap.addMarker(marker);
-		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-		locLatLng = latLng;
-		this.message = message; 
+		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locLatLng, zoom));
 	}
 }

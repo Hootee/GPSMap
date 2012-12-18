@@ -98,16 +98,16 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		} else {		
 			// If there are fragment in one of the two frame layouts then both must be there.
 			fragmentManager.popBackStack(); // Tämän poistaa ylimääräisen fragmentin stackista. Ei tarvitse painaa kahta kertaa backia sovelluksesta poistumiseen.
-			MapFrag mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			mapFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			if (mapFrag == null) {
 				mapFrag = new MapFrag();
-				mapFrag.setArguments(createBundle());
+//				mapFrag.setArguments(createBundle());
 				PlaceListFrag placeListFrag = new PlaceListFrag();
 				fragmentTransaction.add(R.id.fragment_placelistfrag, placeListFrag);
 				fragmentTransaction.add(R.id.fragment_mapfrag, mapFrag);
 				fragmentTransaction.commit();
 			}			
+			mapFrag.setLocation(createBundle());
 		}
 	}
 
@@ -139,6 +139,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 */
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
+		Log.i(TAG, "onSaveInstance");
 	    // Save current state
 	    savedInstanceState.putFloat(ZOOM, zoom);
 	    savedInstanceState.putDouble(LATITUDE, latitude);
@@ -220,19 +221,18 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onPause() {
 		super.onPause();
-		doUnbindLocationService();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		if (timer != null) {timer.cancel();}
+		doUnbindLocationService();		
 	}
 
 	private ServiceConnection mLocationServiceConnection = new ServiceConnection() {
@@ -308,7 +308,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 		String selection = PlaceListDB.KEY_ROWID + "=" + rowID;
 		Cursor c = getContentResolver().query(PlaceListProvider.CONTENT_URI, projection, selection, null, null);
 		c.moveToFirst();
-		String message = c.getString(c.getColumnIndex(PlaceListDB.KEY_NAME));
+		message = c.getString(c.getColumnIndex(PlaceListDB.KEY_NAME));
 		latitude = Double.parseDouble(c.getString(c.getColumnIndex(PlaceListDB.KEY_LATITUDE)));
 		longitude = Double.parseDouble(c.getString(c.getColumnIndex(PlaceListDB.KEY_LONGITUDE)));
 		Log.i(TAG, "onPlaceSelected: " + latitude + ", " + longitude + ", " + message);
@@ -322,13 +322,11 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 
 			FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-//			mapFrag = new MapFrag();
-//			mapFrag.setArguments(createBundle());
 			if (mapFrag == null) {
 				mapFrag = new MapFrag();
-				mapFrag.setArguments(createBundle());
-			} else {
-			}
+			} 
+
+			mapFrag.setLocation(createBundle());
 
 			// Replace whatever is in the fragment_container view with this fragment,
 			// and add the transaction to the back stack so the user can navigate back
@@ -345,8 +343,8 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 			
 			MapFrag mFrag = (MapFrag) fragmentManager.findFragmentById(id.fragment_mapfrag);
 			// Call a method in the MapFrag to update its content
-			mFrag.updateMapMarker(new LatLng(latitude, longitude), message);
-
+			mFrag.setLocation(createBundle());
+			mFrag.updateMapMarker();
 		}
 	}
 	
