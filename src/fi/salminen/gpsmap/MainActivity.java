@@ -234,7 +234,6 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onStop() {
 		super.onStop();
-		if (timer != null) {timer.cancel();}
 		doUnbindLocationService();		
 		NotificationManager mNotificationManager =
 			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -243,6 +242,7 @@ public class MainActivity extends FragmentActivity implements PlaceListFrag.OnPl
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		if (timer != null) {timer.cancel();}
 	}
 
 	private ServiceConnection mLocationServiceConnection = new ServiceConnection() {
