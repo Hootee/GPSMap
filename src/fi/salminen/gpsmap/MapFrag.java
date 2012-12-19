@@ -1,7 +1,6 @@
 package fi.salminen.gpsmap;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +13,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFrag extends SupportMapFragment {
+	@SuppressWarnings("unused")
 	private static final String TAG = "MapFrag";
 	
 	private LatLng locLatLng = null;
@@ -28,14 +28,12 @@ public class MapFrag extends SupportMapFragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.i(TAG, "onCreate");
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View view = super.onCreateView(inflater, container, savedInstanceState);
-		Log.i(TAG, "onCreateView");
 
 		return view;
 	}
@@ -43,11 +41,11 @@ public class MapFrag extends SupportMapFragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		Log.i(TAG, "onResume");
 
         mMap = getMap();
 		initMap();
 		
+		// Lisätään markkeri, jos location on asetettu.
         if(message != null) {
         	updateMapMarker();
         }
@@ -55,7 +53,6 @@ public class MapFrag extends SupportMapFragment {
 	}
 	
 	public boolean setLocation(Bundle args) {
-		Log.i(TAG, "setLocation");
         if (args != null) {
         	locLatLng = new LatLng(args.getDouble(MainActivity.LATITUDE), args.getDouble(MainActivity.LONGITUDE));
         	zoom = args.getFloat(MainActivity.ZOOM);
@@ -72,7 +69,6 @@ public class MapFrag extends SupportMapFragment {
 	}
 	
 	public void updateMapMarker() {
-		Log.i(TAG, "update marker: " + message);
 		mMap.clear();
 		MarkerOptions marker = new MarkerOptions().position(locLatLng).title(message);
 		mMap.addMarker(marker);
